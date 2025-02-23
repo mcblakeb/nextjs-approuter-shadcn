@@ -1,6 +1,6 @@
 import { drizzle } from "drizzle-orm/mysql2";
 import mysql from "mysql2/promise";
-import { CardWord } from "./schema";
+import { CardCategory, CardWord } from "./schema";
 
 const createDbConnection = async () => {
   const connection = await mysql.createConnection({
@@ -20,4 +20,15 @@ const getCardWordData = async () => {
   return data;
 };
 
-export { getCardWordData };
+const insertCardCategory = async (
+  categoryName: string,
+  categoryDesc: string
+) => {
+  const db = await createDbConnection();
+  await db
+    .insert(CardCategory)
+    .values({ categoryName, categoryDesc })
+    .execute();
+};
+
+export { getCardWordData, insertCardCategory };

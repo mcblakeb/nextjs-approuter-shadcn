@@ -1,22 +1,23 @@
-'use client';
+"use client";
 
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from '@/components/ui/tooltip';
+} from "@/components/ui/tooltip";
 
-import { translateText } from '@/lib/translate';
+import { translateText } from "@/lib/translate";
+import React from "react";
 //import Image from 'next/image'
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from "react";
 
 export default function Home() {
-  const [translation, setTranslation] = useState('');
+  const [translation, setTranslation] = useState("");
   const speakWord = useCallback((word: string) => {
     const utterance = new SpeechSynthesisUtterance(word);
-    utterance.lang = 'es-ES'; // Set to Spanish pronunciation
+    utterance.lang = "es-ES"; // Set to Spanish pronunciation
     speechSynthesis.speak(utterance);
   }, []);
 
@@ -26,9 +27,9 @@ export default function Home() {
 
   let words: string[] = [];
   useEffect(() => {
-    words = ['Vamos', 'a', 'la', 'casa', 'cuando', 'tu', 'quieres'];
+    words = ["Vamos", "a", "la", "casa", "cuando", "tu", "quieres"];
     const fetchTranslations = async () => {
-      const translation = await translateText(words.join(' '));
+      const translation = await translateText(words.join(" "));
       setWordsAndTranslations(
         words.map((word, index) => ({
           word,
@@ -46,7 +47,7 @@ export default function Home() {
         <div className="flex-1 flex items-center justify-center bg-gradient-to-b from-cyan-700 to-cyan-900">
           <p className="text-3xl text-white">
             {wordsAndTranslations.map((item, index) => (
-              <>
+              <React.Fragment key={index}>
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger>
@@ -63,8 +64,8 @@ export default function Home() {
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
-                <span>&nbsp;</span>
-              </>
+                <span key={index}>&nbsp;</span>
+              </React.Fragment>
             ))}
           </p>
         </div>
