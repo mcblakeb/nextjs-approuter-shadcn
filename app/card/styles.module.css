@@ -1,0 +1,31 @@
+.c {
+  position: absolute;
+  max-width: 500px;
+  max-height: 500px;
+  width: 350px;
+  height: 200px;
+  cursor: pointer;
+  will-change: transform, opacity;
+}
+
+.card {
+  background-size: cover;
+  align-items: center;
+  display: flex;
+  justify-content: center;
+}
+
+.container {
+  display: flex;
+  align-items: start;
+  height: 100%;
+  justify-content: center;
+}
+
+.absolute_wrapper {
+  position: relative;
+  width: 350px;
+  height: 200px;
+  max-width: 500px;
+  max-height: 500px;
+}
