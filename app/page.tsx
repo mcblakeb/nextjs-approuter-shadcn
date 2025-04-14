@@ -1,35 +1,23 @@
-import { RetroList } from "@/components/ui/retro-list";
-import Topbar from "@/components/ui/topbar";
-import { AddRetroColumn } from "@/components/ui/retro-column";
-import { getUserRetros } from "@/lib/retro";
+import { RetroList } from '@/components/ui/retro-list';
+import Topbar from '@/components/ui/topbar';
+import { AddRetroColumn } from '@/components/ui/retro-column';
+import { getLatestUserRetro, getUserByEmail, getUserRetros } from '@/lib/retro';
+import { cookies } from 'next/headers';
+import { redirect } from 'next/navigation';
 
 export default async function Retro() {
-  // Mock data for retros
-  const retros = await getUserRetros(1); // Replace with actual user ID
+  const cookieStore = await cookies();
+  const dataRaw = await cookieStore.get('sr.userData')?.value;
+  const dataParsed = JSON.parse(dataRaw! || '{}');
+  const user = await getUserByEmail(dataParsed.email!);
+  const latest = await getLatestUserRetro(user!.id!);
 
-  return (
-    <div className="flex flex-col h-screen text-gray-900">
-      {/* Top bar */}
-      <Topbar />
+  // redirect to slug page if latest retro exists
+  if (latest) {
+    redirect(`/retro/${latest.slug}`);
+  }
 
-      {/* Main content */}
-      <div className="flex flex-1 overflow-hidden">
-        {/* First sidebar with retro list */}
-        <div className="w-1/5 bg-gray-100 p-4">
-          <RetroList retros={retros} />
-        </div>
-
-        {/* Other sidebars */}
-        <AddRetroColumn columnId={0} headerText="The Good" items={[]} />
-        <AddRetroColumn columnId={1} headerText="To Improve" items={[]} />
-        <AddRetroColumn columnId={2} headerText="Action Items" items={[]} />
-        <AddRetroColumn
-          columnId={3}
-          headerText="Summary"
-          items={[]}
-          aiSummary={true}
-        />
-      </div>
-    </div>
-  );
+  // Add create retro logic here as a fallback
+  // For now, just redirect to the retros page
+  redirect('/retro/onboarding');
 }

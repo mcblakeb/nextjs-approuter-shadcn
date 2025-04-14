@@ -1,5 +1,5 @@
-import { eq } from "drizzle-orm";
-import { createDbConnection } from "./database";
+import { eq } from 'drizzle-orm';
+import { createDbConnection } from './database';
 import {
   NewRetro,
   NewRetroNote,
@@ -9,7 +9,7 @@ import {
   NewUser,
   users,
   User,
-} from "./schema";
+} from './schema';
 
 const db = await createDbConnection();
 
@@ -30,6 +30,17 @@ async function getUserRetros(userId: number): Promise<UserRetroResponse> {
       user: true, // Include user data if needed
     },
   });
+}
+
+async function getLatestUserRetro(
+  userId: number
+): Promise<NewRetro | undefined> {
+  const latestRetro = await db.query.retros.findFirst({
+    where: eq(retros.createdById, userId),
+    orderBy: (retros, { desc }) => [desc(retros.createdAt)],
+  });
+
+  return latestRetro;
 }
 
 async function getUserRetroBySlug(slug: string) {
@@ -66,7 +77,7 @@ async function createRetro(retro: NewRetro) {
     .values({
       userId: retro.createdById,
       retroId: latestRetro!.id,
-      role: "owner",
+      role: 'owner',
       createdAt: new Date(),
     })
     .execute();
@@ -110,6 +121,7 @@ export {
   getUserRetroBySlug,
   createUser,
   getUserByEmail,
+  getLatestUserRetro,
   deleteRetro,
   getUserRetros,
   createRetro,
