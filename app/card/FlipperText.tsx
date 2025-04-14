@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { useSpring, a, animated } from '@react-spring/web';
+//import { useSpring, a, animated } from '@react-spring/web';
 import { Verb } from './verbs';
 
 import styles from './styles.module.css';
@@ -20,13 +20,13 @@ export default function FlipperText(props: CardProps) {
   const [item, setItem] = useState<Verb>(showItems[0]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [flipped, set] = useState(false);
-  const { transform, opacity } = useSpring({
-    opacity: flipped ? 1 : 0,
-    transform: `perspective(600px) rotateX(${flipped ? 180 : 0}deg)`,
-    config: { mass: 5, tension: 500, friction: 80 },
-  });
-  const sharedStyles = { opacity, transform };
-  const sharedClassNames = `${styles.c} ${styles.shrink} px-2 flex text-center justify-center items-center card text-slate-900 text-4xl`;
+  // const { transform, opacity } = useSpring({
+  //   opacity: flipped ? 1 : 0,
+  //   transform: `perspective(600px) rotateX(${flipped ? 180 : 0}deg)`,
+  //   config: { mass: 5, tension: 500, friction: 80 },
+  // });
+  // const sharedStyles = { opacity, transform };
+  // const sharedClassNames = `${styles.c} ${styles.shrink} px-2 flex text-center justify-center items-center card text-slate-900 text-4xl`;
 
   function nextItem() {
     console.log('nextItem');
@@ -48,7 +48,8 @@ export default function FlipperText(props: CardProps) {
             className={styles.container}
             onClick={() => set((state) => !state)}
           >
-            <animated.div
+            TODO
+            {/* <animated.div
               className={`${sharedClassNames} bg-slate-100`}
               style={{ ...sharedStyles, opacity: opacity.to((o) => 1 - o) }}
             >
@@ -59,7 +60,7 @@ export default function FlipperText(props: CardProps) {
               style={{ ...sharedStyles, rotateX: '180deg' }}
             >
               {item.spanish}
-            </animated.div>
+            </animated.div> */}
           </div>
         </div>
         <div

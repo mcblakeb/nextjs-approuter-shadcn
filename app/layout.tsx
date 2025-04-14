@@ -20,9 +20,6 @@ export default function RootLayout({
   children,
 }: {
   children: React.ReactNode;
-  pageProps: {
-    session: any;
-  };
 }) {
   return (
     <html lang="en" className={`${bangers.variable}`}>
