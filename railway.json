@@ -3,7 +3,7 @@
     "nixpacksPlan": {
       "phases": {
         "setup": {
-          "cmds": ["npm ci --force || npm install --force"]
+          "cmds": ["npm ci --legacy-peer-deps --force || npm install --legacy-peer-deps --force"]
         },
         "build": {
           "cmds": ["npm run build"]
