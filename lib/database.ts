@@ -31,4 +31,4 @@ const insertCardCategory = async (
     .execute();
 };
 
-export { getCardWordData, insertCardCategory };
+export { getCardWordData, insertCardCategory, createDbConnection };
