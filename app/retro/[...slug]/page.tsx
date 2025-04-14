@@ -4,15 +4,16 @@ import { AddRetroColumn } from "@/components/ui/retro-column";
 import { getUserByEmail, getUserRetroBySlug, getUserRetros } from "@/lib/retro";
 import { cookies } from "next/headers";
 
-export default async function Page({ params }: { params: { slug: string } }) {
-  if (!params.slug) {
+export default async function Page({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  if (!slug) {
     throw new Error("Slug is required");
   }
   const cookieStore = await cookies();
   const dataRaw = await cookieStore.get("sr.userData")?.value;
   const dataParsed = JSON.parse(dataRaw! || "{}");
   const user = await getUserByEmail(dataParsed.email!);
-  const currentRetro = await getUserRetroBySlug(params.slug);
+  const currentRetro = await getUserRetroBySlug(slug);
   const allRetros = await getUserRetros(user!.id!);
   return (
     <div className="flex flex-col h-screen text-gray-900">
