@@ -2,15 +2,10 @@
 
 import { Button } from "@/components/ui/button";
 import CreateModal from "@/components/ui/create-modal";
-
-interface RetroItem {
-  id: number;
-  name: string;
-  slug: string;
-}
+import { UserRetroResponse } from "@/lib/retro";
 
 interface RetroListProps {
-  retros: RetroItem[];
+  retros: UserRetroResponse;
 }
 
 export function RetroList({ retros }: RetroListProps) {
@@ -27,14 +22,14 @@ export function RetroList({ retros }: RetroListProps) {
       {/* Scrollable list */}
       <div className="flex-1 overflow-y-auto">
         <ul className="space-y-1">
-          {retros.map((retro) => (
-            <li key={retro.id}>
+          {retros.map((retroItem) => (
+            <li key={retroItem.retro.slug}>
               <Button
                 variant="ghost"
-                onClick={() => handleRetroClick(retro.slug)}
+                onClick={() => handleRetroClick(retroItem.retro.slug)}
                 className="w-full justify-start hover:bg-gray-200 cursor-pointer"
               >
-                {retro.name}
+                {retroItem.retro.name}
               </Button>
             </li>
           ))}

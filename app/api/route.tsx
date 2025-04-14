@@ -1,4 +1,4 @@
-import { getCardWordData } from "@/lib/database";
+import { getCardWordData } from "@/lib/old";
 import { NextResponse } from "next/server";
 
 // To handle a GET request to /api

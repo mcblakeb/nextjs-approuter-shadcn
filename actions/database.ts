@@ -1,6 +1,6 @@
 "use server";
 
-import { insertCardCategory } from "@/lib/database";
+import { insertCardCategory } from "@/lib/old";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 

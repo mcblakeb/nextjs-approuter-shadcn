@@ -68,7 +68,7 @@ function generateRandomSlug(): string {
   const randomFamous =
     randomFamousPerson[Math.floor(Math.random() * randomFamousPerson.length)];
   // Combine into slug format (adjective-noun-number)
-  return `${randomAdjective}-${randomNoun}-${randomFamous}-${randomNum}`;
+  return `${randomAdjective}-${randomNoun}-${randomFamous}-${randomNum}`.toLowerCase();
 }
 
 // utils/colorUtils.ts

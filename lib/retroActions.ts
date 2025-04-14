@@ -5,16 +5,16 @@ import { generateRandomSlug } from "@/lib/utils";
 type CreateRetroActionParams = {
   title: string;
   description: string;
-  email: string;
   date: string;
+  createdById: number;
 };
 
 async function createRetroAction(params: CreateRetroActionParams) {
-  const { title, description, email, date } = params;
+  const { title, description, createdById, date } = params;
   const created = await createRetro({
     name: title,
     description,
-    email: email,
+    createdById: createdById,
     slug: generateRandomSlug(),
     date: new Date(date),
     createdAt: new Date(),
@@ -26,16 +26,14 @@ async function createRetroAction(params: CreateRetroActionParams) {
 async function createRetroNoteAction(params: {
   retroId: number;
   content: string;
-  createdByName: string;
-  createdByEmail: string;
+  userId: number;
   category: string;
 }) {
-  const { retroId, content, createdByName, createdByEmail, category } = params;
+  const { retroId, content, userId, category } = params;
   const created = await createRetroNote({
     retroId,
     content,
-    createdByName,
-    createdByEmail,
+    userId,
     category,
     createdAt: new Date(),
     categoryId: 0,

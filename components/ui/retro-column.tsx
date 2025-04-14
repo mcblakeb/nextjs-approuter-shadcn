@@ -11,7 +11,7 @@ import { useSession } from "next-auth/react";
 interface AddRetroColumnProps {
   headerText?: string;
   aiSummary?: boolean;
-  items?: RetroNote[];
+  items?: any[];
   columnId: number;
 }
 
@@ -21,10 +21,9 @@ export function AddRetroColumn({
   columnId,
   items = [],
 }: AddRetroColumnProps) {
-  const { data: session } = useSession();
   const [isAdding, setIsAdding] = useState(false);
   const [newRetroItemText, setNewRetroItemText] = useState("");
-  const [retroItems, setRetroItems] = useState<RetroNote[]>(items || []);
+  const [retroItems, setRetroItems] = useState<any[]>(items || []);
   const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
 
   const handleAddClick = () => {
@@ -36,8 +35,7 @@ export function AddRetroColumn({
       const newItem = {
         id: Date.now(), // Generate a unique ID (replace with actual logic if needed)
         content: newRetroItemText,
-        createdByName: session?.user?.name || "", // Replace with actual user data if available
-        createdByEmail: session?.user?.email || "", // Replace with actual user email if available
+        userId: 0,
         createdAt: new Date(),
         retroId: 1, // Replace with actual retro ID if available
         categoryId: columnId,
@@ -70,8 +68,7 @@ export function AddRetroColumn({
       const aiSummaryNote = {
         id: Date.now(), // Generate a unique ID (replace with actual logic if needed)
         content: `AI Summary: ${summary}`,
-        createdByName: "AI", // Replace with actual user data if available
-        createdByEmail: "anonymous@example.com", // Replace with actual user email if available
+        userId: 0,
         createdAt: new Date(),
         retroId: 1, // Replace with actual retro ID if available
         categoryId: columnId,
@@ -126,7 +123,7 @@ export function AddRetroColumn({
             <RetroItemCard
               key={index}
               content={item.content}
-              userName={item.createdByName} // Or pass actual user data
+              userName={item.user.name} // Or pass actual user data
               isAISummary={item.content.startsWith("AI Summary:")}
             />
           ))}

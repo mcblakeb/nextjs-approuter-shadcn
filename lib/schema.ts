@@ -9,34 +9,67 @@ import {
   varchar,
 } from "drizzle-orm/mysql-core";
 import { relations } from "drizzle-orm";
-
-// Retro table
+// User table
+const users = mysqlTable("users", {
+  id: serial("id").primaryKey(),
+  name: varchar("name", { length: 255 }).notNull(),
+  email: varchar("email", { length: 255 }).notNull().unique(),
+  image: varchar("image", { length: 512 }),
+  googleId: varchar("google_id", { length: 255 }).unique(),
+  createdAt: datetime("created_at").default(new Date()).notNull(),
+  updatedAt: datetime("updated_at").$onUpdateFn(() => new Date()),
+});
+// Retro table (updated)
 const retros = mysqlTable("retros", {
   id: serial("id").primaryKey(),
-  name: text("name").notNull(),
-  description: text("description"),
-  email: text("email").notNull(),
+  name: varchar("name", { length: 255 }).notNull(), // Changed from text
+  description: text("description"), // Can stay as text since it's not indexed
   date: date("date").notNull(),
-  slug: text("slug").notNull(),
+  createdById: int("created_by_id").notNull(),
+  slug: varchar("slug", { length: 255 }).notNull().unique(), // Changed from text
   createdAt: datetime("created_at").default(new Date()).notNull(),
   updatedAt: datetime("updated_at").$onUpdateFn(() => new Date()),
 });
 
-// RetroNote table
+// User X Retro mapping table (many-to-many)
+const usersToRetros = mysqlTable("users_to_retros", {
+  id: serial("id").primaryKey(),
+  userId: int("user_id").notNull(),
+  retroId: int("retro_id").notNull(),
+  role: text("role").$type<"owner" | "member">().default("member"),
+  createdAt: datetime("created_at").default(new Date()).notNull(),
+});
+
 const retroNotes = mysqlTable("retro_notes", {
   id: serial("id").primaryKey(),
   retroId: int("retro_id").notNull(),
-  content: text("content").notNull(),
-  createdByName: text("created_by_name").notNull(),
-  createdByEmail: text("created_by_email").notNull(),
-  category: text("category"),
+  userId: int("user_id").notNull(),
+  content: text("content").notNull(), // Left as TEXT for long content
+  category: varchar("category", { length: 100 }), // Changed to VARCHAR
   categoryId: int("category_id").notNull(),
   createdAt: datetime("created_at").default(new Date()).notNull(),
 });
 
 // Define relations
+const userRelations = relations(users, ({ many }) => ({
+  retros: many(usersToRetros),
+  notes: many(retroNotes),
+}));
+
 const retroRelations = relations(retros, ({ many }) => ({
   notes: many(retroNotes),
+  users: many(usersToRetros),
+}));
+
+const usersToRetrosRelations = relations(usersToRetros, ({ one }) => ({
+  retro: one(retros, {
+    fields: [usersToRetros.retroId],
+    references: [retros.id],
+  }),
+  user: one(users, {
+    fields: [usersToRetros.userId],
+    references: [users.id],
+  }),
 }));
 
 const retroNoteRelations = relations(retroNotes, ({ one }) => ({
@@ -44,11 +77,19 @@ const retroNoteRelations = relations(retroNotes, ({ one }) => ({
     fields: [retroNotes.retroId],
     references: [retros.id],
   }),
+  user: one(users, {
+    fields: [retroNotes.userId],
+    references: [users.id],
+  }),
 }));
 
 // Types
+type User = typeof users.$inferSelect;
+type NewUser = typeof users.$inferInsert;
 type Retro = typeof retros.$inferSelect;
 type NewRetro = typeof retros.$inferInsert;
+type UserToRetro = typeof usersToRetros.$inferSelect;
+type NewUserToRetro = typeof usersToRetros.$inferInsert;
 type RetroNote = typeof retroNotes.$inferSelect;
 type NewRetroNote = typeof retroNotes.$inferInsert;
 
@@ -82,16 +123,24 @@ const CardWordRelations = relations(CardWord, ({ one }) => ({
 }));
 
 export {
+  CardCategory,
+  CardCategoryRelations,
+  CardWord,
+  CardWordRelations,
   retros,
   retroNotes,
   retroRelations,
   retroNoteRelations,
-  type Retro,
+  users,
+  usersToRetros,
+  usersToRetrosRelations,
+  userRelations,
   type NewRetro,
-  type RetroNote,
   type NewRetroNote,
-  CardCategory,
-  CardWord,
-  CardCategoryRelations,
-  CardWordRelations,
+  type NewUser,
+  type NewUserToRetro,
+  type Retro,
+  type RetroNote,
+  type User,
+  type UserToRetro,
 };
