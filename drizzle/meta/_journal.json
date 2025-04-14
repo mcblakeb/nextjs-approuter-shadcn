@@ -22,6 +22,27 @@
       "when": 1744588422733,
       "tag": "0002_legal_sir_ram",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "5",
+      "when": 1744605263692,
+      "tag": "0003_omniscient_cobalt_man",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "5",
+      "when": 1744605397648,
+      "tag": "0004_long_outlaw_kid",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "5",
+      "when": 1744605571229,
+      "tag": "0005_strange_aqueduct",
+      "breakpoints": true
     }
   ]
 }

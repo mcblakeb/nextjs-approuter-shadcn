@@ -34,7 +34,7 @@ export default function CreateModal() {
     const response = await createRetroAction({
       title: formData.name,
       description: formData.description,
-      email: session?.user?.email,
+      createdById: 0,
       date: date?.toISOString() || new Date().toISOString(),
     });
     console.log("Retro created:", response);
