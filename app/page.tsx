@@ -1,75 +1,96 @@
-"use client";
+import { RetroList } from "@/components/ui/retro-list";
+import Topbar from "@/components/ui/topbar";
+import { AddRetroColumn } from "@/components/ui/retro-column";
+import { RetroNote } from "@/lib/schema";
 
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+export default function Retro() {
+  // Mock data for retros
+  const mockRetros = [
+    { id: 1, name: "Sprint Review - April", slug: "sprint-review-april-123" },
+    { id: 2, name: "Product Roadmap", slug: "product-roadmap-456" },
+    { id: 3, name: "Team Retrospective", slug: "team-retro-789" },
+    { id: 4, name: "UX Feedback", slug: "ux-feedback-101" },
+    { id: 5, name: "Q2 Planning", slug: "q2-planning-112" },
+  ];
 
-import { translateText } from "@/lib/translate";
-import React from "react";
-//import Image from 'next/image'
-
-import { useCallback, useEffect, useState } from "react";
-
-export default function Home() {
-  const [translation, setTranslation] = useState("");
-  const speakWord = useCallback((word: string) => {
-    const utterance = new SpeechSynthesisUtterance(word);
-    utterance.lang = "es-ES"; // Set to Spanish pronunciation
-    speechSynthesis.speak(utterance);
-  }, []);
-
-  const [wordsAndTranslations, setWordsAndTranslations] = useState<
-    { word: string; translation: string }[]
-  >([]);
-
-  let words: string[] = [];
-  useEffect(() => {
-    words = ["Vamos", "a", "la", "casa", "cuando", "tu", "quieres"];
-    const fetchTranslations = async () => {
-      const translation = await translateText(words.join(" "));
-      setWordsAndTranslations(
-        words.map((word, index) => ({
-          word,
-          translation: translation,
-        }))
-      );
-    };
-    fetchTranslations();
-  }, []);
+  const mockRetroItems: RetroNote[] = [
+    {
+      id: 1,
+      retroId: 1,
+      content: "Great teamwork and collaboration.",
+      createdByName: "Alice Cooper",
+      createdByEmail: "test@test.com",
+      category: null,
+      categoryId: 0,
+      createdAt: new Date(),
+    },
+    {
+      id: 2,
+      retroId: 1,
+      content: "Great other stuff.",
+      createdByName: "Frank Weenie",
+      createdByEmail: "test@test.com",
+      category: null,
+      categoryId: 0,
+      createdAt: new Date(),
+    },
+    {
+      id: 3,
+      retroId: 1,
+      content: "Oops.",
+      createdByName: "John Smith",
+      createdByEmail: "test@test.com",
+      category: null,
+      categoryId: 1,
+      createdAt: new Date(),
+    },
+    {
+      id: 3,
+      retroId: 1,
+      content: "Plan better",
+      createdByName: "John Smith",
+      createdByEmail: "test@test.com",
+      category: null,
+      categoryId: 2,
+      createdAt: new Date(),
+    },
+  ];
 
   return (
-    <main>
-      <div className="flex h-dvh bg-green-100">
-        <div className="bg-blue-100 w-52 text-amber-950 h-screen">1st col</div>
-        <div className="flex-1 flex items-center justify-center bg-gradient-to-b from-cyan-700 to-cyan-900">
-          <p className="text-3xl text-white">
-            {wordsAndTranslations.map((item, index) => (
-              <React.Fragment key={index}>
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger>
-                      <span
-                        key={index}
-                        className="cursor-pointer hover:underline hover:decoration-dotted"
-                        onClick={() => speakWord(item.word)}
-                      >
-                        {item.word}
-                      </span>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>{item.translation}</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-                <span key={index}>&nbsp;</span>
-              </React.Fragment>
-            ))}
-          </p>
+    <div className="flex flex-col h-screen text-gray-900">
+      {/* Top bar */}
+      <Topbar />
+
+      {/* Main content */}
+      <div className="flex flex-1 overflow-hidden">
+        {/* First sidebar with retro list */}
+        <div className="w-1/5 bg-gray-100 p-4">
+          <RetroList retros={mockRetros} />
         </div>
+
+        {/* Other sidebars */}
+        <AddRetroColumn
+          columnId={0}
+          headerText="The Good"
+          items={mockRetroItems}
+        />
+        <AddRetroColumn
+          columnId={1}
+          headerText="To Improve"
+          items={mockRetroItems}
+        />
+        <AddRetroColumn
+          columnId={2}
+          headerText="Action Items"
+          items={mockRetroItems}
+        />
+        <AddRetroColumn
+          columnId={3}
+          headerText="Summary"
+          items={mockRetroItems}
+          aiSummary={true}
+        />
       </div>
-    </main>
+    </div>
   );
 }

@@ -30,6 +30,9 @@ module.exports = {
       },
     },
     extend: {
+      fontFamily: {
+        bangers: ["var(--font-bangers)", "sans-serif"],
+      },
       bg: {
         citron,
       },

@@ -1,7 +1,13 @@
 import AuthProvider from "@/components/ui/auth-provider";
 import "./globals.css";
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Inter, Bangers } from "next/font/google";
+
+const bangers = Bangers({
+  weight: "400",
+  subsets: ["latin"],
+  variable: "--font-bangers",
+});
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -19,7 +25,7 @@ export default function RootLayout({
   };
 }) {
   return (
-    <html lang="en">
+    <html lang="en" className={`${bangers.variable}`}>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link
