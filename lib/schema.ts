@@ -44,8 +44,8 @@ const retroNotes = mysqlTable("retro_notes", {
   id: serial("id").primaryKey(),
   retroId: int("retro_id").notNull(),
   userId: int("user_id").notNull(),
-  content: text("content").notNull(), // Left as TEXT for long content
-  category: varchar("category", { length: 100 }), // Changed to VARCHAR
+  content: text("content").notNull(),
+  category: varchar("category", { length: 100 }), 
   categoryId: int("category_id").notNull(),
   createdAt: datetime("created_at").default(new Date()).notNull(),
 });

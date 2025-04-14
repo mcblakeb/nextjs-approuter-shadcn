@@ -1,28 +1,32 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Sparkles } from "lucide-react";
-import { RetroItemCard } from "./retro-item-card";
-import { RetroNote } from "@/lib/schema";
-import { useSession } from "next-auth/react";
+import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Sparkles } from 'lucide-react';
+import { RetroItemCard } from './retro-item-card';
+import { NewUser, Retro, RetroNote } from '@/lib/schema';
+import { createRetroNoteAction } from '@/lib/retroActions';
 
 interface AddRetroColumnProps {
   headerText?: string;
   aiSummary?: boolean;
   items?: any[];
   columnId: number;
+  user: NewUser;
+  retro: Retro;
 }
 
 export function AddRetroColumn({
-  headerText = "Retro",
+  headerText = 'Retro',
   aiSummary = false,
   columnId,
+  user,
+  retro,
   items = [],
 }: AddRetroColumnProps) {
   const [isAdding, setIsAdding] = useState(false);
-  const [newRetroItemText, setNewRetroItemText] = useState("");
+  const [newRetroItemText, setNewRetroItemText] = useState('');
   const [retroItems, setRetroItems] = useState<any[]>(items || []);
   const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
 
@@ -30,33 +34,45 @@ export function AddRetroColumn({
     setIsAdding(true);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (newRetroItemText.trim()) {
       const newItem = {
-        id: Date.now(), // Generate a unique ID (replace with actual logic if needed)
+        id: Date.now(),
         content: newRetroItemText,
-        userId: 0,
+        userId: user.id,
         createdAt: new Date(),
-        retroId: 1, // Replace with actual retro ID if available
+        retroId: retro.id,
         categoryId: columnId,
         category: headerText,
+        user: {
+          name: user.name,
+          id: user.id,
+        },
       };
       setRetroItems([...retroItems, newItem]);
-      setNewRetroItemText("");
+      setNewRetroItemText('');
       setIsAdding(false);
+
+      await createRetroNoteAction({
+        retroId: retro.id,
+        content: newRetroItemText,
+        userId: user.id!,
+        category: headerText,
+        categoryId: columnId,
+      });
     }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") {
+    if (e.key === 'Enter') {
       handleSave();
-    } else if (e.key === "Escape") {
+    } else if (e.key === 'Escape') {
       handleCancel();
     }
   };
 
   const handleCancel = () => {
-    setNewRetroItemText("");
+    setNewRetroItemText('');
     setIsAdding(false);
   };
 
@@ -80,17 +96,17 @@ export function AddRetroColumn({
   };
 
   const generateAISummary = (items: RetroNote[]): string => {
-    if (items.length === 0) return "No items to summarize";
+    if (items.length === 0) return 'No items to summarize';
     const positives = items.filter(
       (item) =>
-        item.content.toLowerCase().includes("good") ||
-        item.content.toLowerCase().includes("positive")
+        item.content.toLowerCase().includes('good') ||
+        item.content.toLowerCase().includes('positive')
     ).length;
 
     const improvements = items.filter(
       (item) =>
-        item.content.toLowerCase().includes("improve") ||
-        item.content.toLowerCase().includes("negative")
+        item.content.toLowerCase().includes('improve') ||
+        item.content.toLowerCase().includes('negative')
     ).length;
 
     return `Key insights: ${positives} positive notes, ${improvements} areas for improvement`;
@@ -110,7 +126,7 @@ export function AddRetroColumn({
             disabled={isGeneratingSummary}
           >
             <Sparkles className="h-4 w-4 mr-2" />
-            {isGeneratingSummary ? "Generating..." : ""}
+            {isGeneratingSummary ? 'Generating...' : ''}
           </Button>
         )}
       </div>
@@ -123,8 +139,8 @@ export function AddRetroColumn({
             <RetroItemCard
               key={index}
               content={item.content}
-              userName={item.user.name} // Or pass actual user data
-              isAISummary={item.content.startsWith("AI Summary:")}
+              userName={item.user.name}
+              isAISummary={item.content.startsWith('AI Summary:')}
             />
           ))}
       </div>

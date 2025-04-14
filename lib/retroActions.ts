@@ -1,6 +1,6 @@
-"use server";
-import { createRetro, createRetroNote } from "@/lib/retro";
-import { generateRandomSlug } from "@/lib/utils";
+'use server';
+import { createRetro, createRetroNote } from '@/lib/retro';
+import { generateRandomSlug } from '@/lib/utils';
 
 type CreateRetroActionParams = {
   title: string;
@@ -23,20 +23,23 @@ async function createRetroAction(params: CreateRetroActionParams) {
   return created;
 }
 
-async function createRetroNoteAction(params: {
+type CreateRetroNoteActionParams = {
   retroId: number;
   content: string;
   userId: number;
   category: string;
-}) {
-  const { retroId, content, userId, category } = params;
+  categoryId: number;
+};
+
+async function createRetroNoteAction(params: CreateRetroNoteActionParams) {
+  const { retroId, content, userId, category, categoryId } = params;
   const created = await createRetroNote({
     retroId,
     content,
     userId,
     category,
     createdAt: new Date(),
-    categoryId: 0,
+    categoryId: categoryId,
   });
   return created;
 }

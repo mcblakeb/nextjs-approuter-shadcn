@@ -1,44 +1,63 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Calendar } from "@/components/ui/calendar";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
+import { useEffect, useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Calendar } from '@/components/ui/calendar';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/components/ui/popover";
-import { CalendarIcon } from "@radix-ui/react-icons";
-import { format } from "date-fns";
-import { createRetroAction } from "@/lib/retroActions";
-import { useSession } from "next-auth/react";
+} from '@/components/ui/popover';
+import { CalendarIcon } from '@radix-ui/react-icons';
+import { format } from 'date-fns';
+import { createRetroAction } from '@/lib/retroActions';
+//import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
+import { getUser } from '@/lib/user';
 
 export default function CreateModal() {
-  const { data: session } = useSession();
+  const router = useRouter();
+
   const [isOpen, setIsOpen] = useState(false);
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [formData, setFormData] = useState({
-    name: "",
-    description: "",
+    name: '',
+    description: '',
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!session?.user?.email) {
-      console.error("User email not found");
+
+    const user = await getUser();
+    if (!user) {
+      console.error('User not found');
       return;
     }
-    const response = await createRetroAction({
-      title: formData.name,
-      description: formData.description,
-      createdById: 0,
-      date: date?.toISOString() || new Date().toISOString(),
-    });
-    console.log("Retro created:", response);
-    setIsOpen(false);
+
+    try {
+      const response = await createRetroAction({
+        title: formData.name,
+        description: formData.description,
+        createdById: user?.id!, // You might want to use actual user ID here
+        date: date?.toISOString() || new Date().toISOString(),
+      });
+
+      if (response?.slug) {
+        console.log('Retro created:', response);
+        setIsOpen(false);
+        // Redirect to the new retro
+        router.push(`/retro/${response.slug}`);
+      } else {
+        console.error('Failed to create retro or get slug');
+        // Handle error case (show toast, etc.)
+      }
+    } catch (error) {
+      console.error('Error creating retro:', error);
+      // Handle error case (show toast, etc.)
+    }
   };
 
   return (
@@ -91,7 +110,7 @@ export default function CreateModal() {
                         className="w-full justify-start text-left font-normal"
                       >
                         <CalendarIcon className="mr-2 h-4 w-4" />
-                        {date ? format(date, "PPP") : <span>Pick a date</span>}
+                        {date ? format(date, 'PPP') : <span>Pick a date</span>}
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0">

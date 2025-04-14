@@ -7,7 +7,6 @@ import {
   createRetroNote,
   createUser,
   getUserByEmail,
-  getUserRetroBySlug,
 } from "@/lib/retro";
 import { generateRandomSlug } from "@/lib/utils";
 import { cookies } from "next/headers";
