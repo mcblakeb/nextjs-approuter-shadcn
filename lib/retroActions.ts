@@ -41,6 +41,7 @@ async function createRetroNoteAction(params: CreateRetroNoteActionParams) {
     createdAt: new Date(),
     categoryId: categoryId,
   });
+
   return created;
 }
 

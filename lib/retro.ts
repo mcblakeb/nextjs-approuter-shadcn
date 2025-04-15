@@ -9,6 +9,9 @@ import {
   NewUser,
   users,
   User,
+  RetroNote,
+  UserToRetro,
+  Retro,
 } from './schema';
 
 const db = await createDbConnection();
@@ -32,6 +35,28 @@ async function getUserRetros(userId: number): Promise<UserRetroResponse> {
   });
 }
 
+async function addUserToRetro(
+  userId: number,
+  retroId: number,
+  role: string = 'member'
+): Promise<void> {
+  // prevent adding the same user to the same retro multiple times
+  const existingUser = await db.query.usersToRetros.findFirst({
+    where: (usersToRetros, { eq }) =>
+      eq(usersToRetros.userId, userId) && eq(usersToRetros.retroId, retroId),
+  });
+  if (existingUser) {
+    return;
+  }
+
+  await db.insert(usersToRetros).values({
+    userId,
+    retroId,
+    role: role as 'owner' | 'member',
+    createdAt: new Date(),
+  });
+}
+
 async function getLatestUserRetro(
   userId: number
 ): Promise<NewRetro | undefined> {
@@ -42,8 +67,12 @@ async function getLatestUserRetro(
 
   return latestRetro;
 }
-
-async function getUserRetroBySlug(slug: string) {
+export type RetroSlugResponse = {
+  retro: NewRetro;
+  users: UserToRetro[];
+  notes: RetroNote[];
+};
+async function getUserRetroBySlug(slug: string): Promise<RetroSlugResponse> {
   const retro = await db.query.retros.findFirst({
     where: eq(retros.slug, slug),
     with: {
@@ -52,6 +81,7 @@ async function getUserRetroBySlug(slug: string) {
           user: true, // Include the user who created the note
         },
       },
+      users: true, // Include the users associated with the retro
     },
   });
 
@@ -59,7 +89,11 @@ async function getUserRetroBySlug(slug: string) {
     throw new Error(`Retro with slug "${slug}" not found`);
   }
 
-  return retro;
+  return {
+    retro,
+    users: retro.users,
+    notes: retro.notes,
+  };
 }
 
 async function createRetro(retro: NewRetro) {
@@ -96,6 +130,16 @@ async function updateRetro(id: number, updates: Partial<NewRetro>) {
 
 async function createRetroNote(retroNote: NewRetroNote) {
   const [created] = await db.insert(retroNotes).values(retroNote).execute();
+
+  // Update last update on the retro
+  await db
+    .update(retros)
+    .set({
+      updatedAt: new Date(),
+    })
+    .where(eq(retros.id, retroNote.retroId))
+    .execute();
+
   return created;
 }
 
@@ -118,14 +162,15 @@ async function getRetroById(id: number) {
 }
 
 export {
-  getUserRetroBySlug,
-  createUser,
-  getUserByEmail,
-  getLatestUserRetro,
-  deleteRetro,
-  getUserRetros,
+  addUserToRetro,
   createRetro,
-  updateRetro,
-  getRetroById,
   createRetroNote,
+  createUser,
+  deleteRetro,
+  getLatestUserRetro,
+  getRetroById,
+  getUserByEmail,
+  getUserRetroBySlug,
+  getUserRetros,
+  updateRetro,
 };

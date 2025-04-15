@@ -7,6 +7,7 @@ import { Sparkles } from 'lucide-react';
 import { RetroItemCard } from './retro-item-card';
 import { NewUser, Retro, RetroNote } from '@/lib/schema';
 import { createRetroNoteAction } from '@/lib/retroActions';
+import { RetroSlugResponse } from '@/lib/retro';
 
 interface AddRetroColumnProps {
   headerText?: string;
@@ -14,7 +15,7 @@ interface AddRetroColumnProps {
   items?: any[];
   columnId: number;
   user: NewUser;
-  retro: Retro;
+  retro: RetroSlugResponse;
 }
 
 export function AddRetroColumn({
@@ -41,7 +42,7 @@ export function AddRetroColumn({
         content: newRetroItemText,
         userId: user.id,
         createdAt: new Date(),
-        retroId: retro.id,
+        retroId: retro.retro.id,
         categoryId: columnId,
         category: headerText,
         user: {
@@ -54,7 +55,7 @@ export function AddRetroColumn({
       setIsAdding(false);
 
       await createRetroNoteAction({
-        retroId: retro.id,
+        retroId: retro.retro.id!,
         content: newRetroItemText,
         userId: user.id!,
         category: headerText,
