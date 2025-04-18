@@ -6,9 +6,9 @@ import { RetroPageWrapper } from './retro-page-wrapper';
 export default async function Page({
   params,
 }: {
-  params: { slug: string };
+  params: Promise<{ slug: string }>;
 }) {
-  const { slug } = params;
+  const { slug } = await params;
   if (!slug) {
     throw new Error('Slug is required');
   }
