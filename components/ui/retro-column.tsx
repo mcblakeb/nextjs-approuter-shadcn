@@ -1,13 +1,13 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Sparkles } from 'lucide-react';
-import { RetroItemCard } from './retro-item-card';
-import { NewUser, Retro, RetroNote } from '@/lib/schema';
-import { createRetroNoteAction } from '@/lib/retroActions';
-import { RetroSlugResponse } from '@/lib/retro';
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Sparkles } from "lucide-react";
+import { RetroItemCard } from "./retro-item-card";
+import { NewUser, Retro, RetroNote } from "@/lib/schema";
+import { createRetroNoteAction } from "@/lib/retroActions";
+import { RetroSlugResponse } from "@/lib/retro";
 
 interface AddRetroColumnProps {
   headerText?: string;
@@ -19,7 +19,7 @@ interface AddRetroColumnProps {
 }
 
 export function AddRetroColumn({
-  headerText = 'Retro',
+  headerText = "Retro",
   aiSummary = false,
   columnId,
   user,
@@ -27,7 +27,7 @@ export function AddRetroColumn({
   items = [],
 }: AddRetroColumnProps) {
   const [isAdding, setIsAdding] = useState(false);
-  const [newRetroItemText, setNewRetroItemText] = useState('');
+  const [newRetroItemText, setNewRetroItemText] = useState("");
   const [retroItems, setRetroItems] = useState<any[]>(items || []);
   const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
 
@@ -51,7 +51,7 @@ export function AddRetroColumn({
         },
       };
       setRetroItems([...retroItems, newItem]);
-      setNewRetroItemText('');
+      setNewRetroItemText("");
       setIsAdding(false);
 
       await createRetroNoteAction({
@@ -65,15 +65,15 @@ export function AddRetroColumn({
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter') {
+    if (e.key === "Enter") {
       handleSave();
-    } else if (e.key === 'Escape') {
+    } else if (e.key === "Escape") {
       handleCancel();
     }
   };
 
   const handleCancel = () => {
-    setNewRetroItemText('');
+    setNewRetroItemText("");
     setIsAdding(false);
   };
 
@@ -97,17 +97,17 @@ export function AddRetroColumn({
   };
 
   const generateAISummary = (items: RetroNote[]): string => {
-    if (items.length === 0) return 'No items to summarize';
+    if (items.length === 0) return "No items to summarize";
     const positives = items.filter(
       (item) =>
-        item.content.toLowerCase().includes('good') ||
-        item.content.toLowerCase().includes('positive')
+        item.content.toLowerCase().includes("good") ||
+        item.content.toLowerCase().includes("positive")
     ).length;
 
     const improvements = items.filter(
       (item) =>
-        item.content.toLowerCase().includes('improve') ||
-        item.content.toLowerCase().includes('negative')
+        item.content.toLowerCase().includes("improve") ||
+        item.content.toLowerCase().includes("negative")
     ).length;
 
     return `Key insights: ${positives} positive notes, ${improvements} areas for improvement`;
@@ -127,7 +127,7 @@ export function AddRetroColumn({
             disabled={isGeneratingSummary}
           >
             <Sparkles className="h-4 w-4 mr-2" />
-            {isGeneratingSummary ? 'Generating...' : ''}
+            {isGeneratingSummary ? "Generating..." : ""}
           </Button>
         )}
       </div>
@@ -140,8 +140,15 @@ export function AddRetroColumn({
             <RetroItemCard
               key={index}
               content={item.content}
+              noteId={item.id}
+              isMine={item.userId === user.id}
+              onDelete={() => {
+                setRetroItems((prev) =>
+                  prev.filter((retroItem) => retroItem.id !== item.id)
+                );
+              }}
               userName={item.user.name}
-              isAISummary={item.content.startsWith('AI Summary:')}
+              isAISummary={item.content.startsWith("AI Summary:")}
             />
           ))}
       </div>
@@ -154,7 +161,7 @@ export function AddRetroColumn({
               value={newRetroItemText}
               onChange={(e) => setNewRetroItemText(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Enter retro name"
+              placeholder="Add a new retro item..."
               autoFocus
             />
             <div className="flex gap-2">

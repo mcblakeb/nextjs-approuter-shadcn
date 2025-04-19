@@ -1,5 +1,5 @@
-import { eq } from 'drizzle-orm';
-import { createDbConnection } from './database';
+import { eq } from "drizzle-orm";
+import { createDbConnection } from "./database";
 import {
   NewRetro,
   NewRetroNote,
@@ -12,7 +12,7 @@ import {
   RetroNote,
   UserToRetro,
   Retro,
-} from './schema';
+} from "./schema";
 
 const db = await createDbConnection();
 
@@ -38,7 +38,7 @@ async function getUserRetros(userId: number): Promise<UserRetroResponse> {
 async function addUserToRetro(
   userId: number,
   retroId: number,
-  role: string = 'member'
+  role: string = "member"
 ): Promise<void> {
   // prevent adding the same user to the same retro multiple times
   const existingUser = await db.query.usersToRetros.findFirst({
@@ -52,7 +52,7 @@ async function addUserToRetro(
   await db.insert(usersToRetros).values({
     userId,
     retroId,
-    role: role as 'owner' | 'member',
+    role: role as "owner" | "member",
     createdAt: new Date(),
   });
 }
@@ -111,7 +111,7 @@ async function createRetro(retro: NewRetro) {
     .values({
       userId: retro.createdById,
       retroId: latestRetro!.id,
-      role: 'owner',
+      role: "owner",
       createdAt: new Date(),
     })
     .execute();
@@ -126,6 +126,10 @@ async function updateRetro(id: number, updates: Partial<NewRetro>) {
     .where(eq(retros.id, id))
     .execute();
   return updated;
+}
+
+async function deleteRetroNote(id: number) {
+  await db.delete(retroNotes).where(eq(retroNotes.id, id));
 }
 
 async function createRetroNote(retroNote: NewRetroNote) {
@@ -167,6 +171,7 @@ export {
   createRetroNote,
   createUser,
   deleteRetro,
+  deleteRetroNote,
   getLatestUserRetro,
   getRetroById,
   getUserByEmail,

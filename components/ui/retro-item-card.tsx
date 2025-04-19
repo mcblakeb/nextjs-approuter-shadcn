@@ -2,31 +2,66 @@
 
 import { useState, useRef } from "react";
 import { getNameColorPredefined } from "@/lib/utils";
-import { ThumbsUp } from "lucide-react";
+import { ThumbsUp, Edit, Check, X } from "lucide-react";
+import {
+  deleteRetroNoteAction,
+  updateRetroNoteAction,
+} from "@/lib/retroActions";
 
 interface RetroItemCardProps {
   content: string;
+  noteId: number;
   userName?: string;
   isAISummary?: boolean;
+  isMine: boolean;
+  onDelete?: () => void;
+  onUpdate?: () => void;
 }
 
 export function RetroItemCard({
   content,
+  noteId,
   userName = "Anonymous",
   isAISummary = false,
+  isMine = false,
+  onDelete,
+  onUpdate,
 }: RetroItemCardProps) {
   const [showFullName, setShowFullName] = useState(false);
   const [likeCount, setLikeCount] = useState(0);
   const [hasLiked, setHasLiked] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedContent, setEditedContent] = useState(content);
   const avatarRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const bgColor = getNameColorPredefined(userName);
 
   const handleLikeClick = () => {
-    console.log("Like button clicked");
     setLikeCount(hasLiked ? likeCount - 1 : likeCount + 1);
     setHasLiked(!hasLiked);
-    console.log("Like count:", likeCount);
-    console.log("Has liked:", hasLiked);
+  };
+
+  const handleDeleteClick = async () => {
+    await deleteRetroNoteAction(noteId);
+    if (onDelete) onDelete();
+  };
+
+  const handleEditClick = () => {
+    setIsEditing(true);
+    setTimeout(() => textareaRef.current?.focus(), 0);
+  };
+
+  const handleSaveClick = async () => {
+    if (editedContent !== content) {
+      await updateRetroNoteAction(noteId, editedContent);
+      if (onUpdate) onUpdate();
+    }
+    setIsEditing(false);
+  };
+
+  const handleCancelClick = () => {
+    setEditedContent(content);
+    setIsEditing(false);
   };
 
   return (
@@ -35,12 +70,62 @@ export function RetroItemCard({
         isAISummary ? "bg-blue-50 border-blue-200" : "bg-white border-gray-200"
       }`}
     >
-      {/* Content with left padding to avoid thumbs-up icon */}
-      <p className="pr-8 pb-6">
-        {" "}
-        {/* Added right and bottom padding */}
-        {content}
-      </p>
+      {/* Action buttons at top right */}
+      <div className="absolute top-1 right-1 flex gap-1">
+        {isMine && !isEditing && (
+          <>
+            <button
+              onClick={handleEditClick}
+              className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors text-gray-500 hover:text-blue-500"
+              aria-label="Edit this item"
+            >
+              <Edit className="h-4 w-4" />
+            </button>
+            <button
+              onClick={handleDeleteClick}
+              className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-gray-300 bg-gray-100 transition-colors text-gray-500 hover:text-red-500"
+              aria-label="Delete this item"
+            >
+              <span className="text-base font-bold leading-none">×</span>
+            </button>
+          </>
+        )}
+        {isMine && isEditing && (
+          <>
+            <button
+              onClick={handleSaveClick}
+              className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors text-gray-500 hover:text-green-500"
+              aria-label="Save changes"
+            >
+              <Check className="h-4 w-4" />
+            </button>
+            <button
+              onClick={handleCancelClick}
+              className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors text-gray-500 hover:text-red-500"
+              aria-label="Cancel editing"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </>
+        )}
+      </div>
+
+      {isEditing ? (
+        <textarea
+          ref={textareaRef}
+          value={editedContent}
+          onChange={(e) => setEditedContent(e.target.value)}
+          className="w-full p-2 pr-8 pb-6 resize-none focus:outline-none focus:ring-1 focus:ring-blue-500"
+          rows={2}
+        />
+      ) : (
+        <p
+          className="pr-8 pb-6 whitespace-pre-wrap cursor-text"
+          onClick={isMine ? handleEditClick : undefined}
+        >
+          {content}
+        </p>
+      )}
 
       {/* Like button in bottom left */}
       <div className="absolute bottom-1 left-1 flex items-center gap-1">
