@@ -1,5 +1,10 @@
 "use server";
-import { createRetro, createRetroNote, deleteRetroNote } from "@/lib/retro";
+import {
+  createRetro,
+  createRetroNote,
+  deleteRetroNote,
+  updateRetroNote,
+} from "@/lib/retro";
 import { generateRandomSlug } from "@/lib/utils";
 
 type CreateRetroActionParams = {
@@ -51,4 +56,15 @@ async function deleteRetroNoteAction(noteId: number) {
   return noteId;
 }
 
-export { createRetroAction, createRetroNoteAction, deleteRetroNoteAction };
+async function updateRetroNoteAction(noteId: number, content: string) {
+  await updateRetroNote(noteId, {
+    content,
+  });
+}
+
+export {
+  createRetroAction,
+  createRetroNoteAction,
+  deleteRetroNoteAction,
+  updateRetroNoteAction,
+};

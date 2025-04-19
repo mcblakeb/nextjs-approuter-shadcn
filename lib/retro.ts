@@ -147,6 +147,15 @@ async function createRetroNote(retroNote: NewRetroNote) {
   return created;
 }
 
+async function updateRetroNote(id: number, updates: Partial<NewRetroNote>) {
+  const [updated] = await db
+    .update(retroNotes)
+    .set(updates)
+    .where(eq(retroNotes.id, id))
+    .execute();
+  return updated;
+}
+
 async function getUserByEmail(email: string): Promise<NewUser | null> {
   return await db
     .select()
@@ -178,4 +187,5 @@ export {
   getUserRetroBySlug,
   getUserRetros,
   updateRetro,
+  updateRetroNote,
 };
