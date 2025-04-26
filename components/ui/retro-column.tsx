@@ -8,22 +8,23 @@ import { RetroItemCard } from "./retro-item-card";
 import { NewUser, Retro, RetroNote } from "@/lib/schema";
 import { createRetroNoteAction } from "@/lib/retroActions";
 import { RetroSlugResponse } from "@/lib/retro";
+import PlusIcon from "@/components/ui/plus-icon";
 
-interface AddRetroColumnProps {
+type AddRetroColumnProps = {
   headerText?: string;
   aiSummary?: boolean;
   items?: any[];
   columnId: number;
   user: NewUser;
-  retro: RetroSlugResponse;
-}
+  retroSlugResponse: RetroSlugResponse;
+};
 
 export function AddRetroColumn({
   headerText = "Retro",
   aiSummary = false,
   columnId,
   user,
-  retro,
+  retroSlugResponse: retro,
   items = [],
 }: AddRetroColumnProps) {
   const [isAdding, setIsAdding] = useState(false);
@@ -38,10 +39,10 @@ export function AddRetroColumn({
   const handleSave = async () => {
     if (newRetroItemText.trim()) {
       const newItem = {
-        id: Date.now(),
+        id: Date.now().toString(), // Convert to string
         content: newRetroItemText,
         userId: user.id,
-        createdAt: new Date(),
+        createdAt: new Date().toISOString(), // Use ISO string instead of Date object
         retroId: retro.retro.id,
         categoryId: columnId,
         category: headerText,
@@ -153,7 +154,7 @@ export function AddRetroColumn({
           ))}
       </div>
 
-      {/* Add new retro section */}
+      {/* Add new retro item section */}
       <div className="mt-auto pt-4">
         {isAdding ? (
           <div className="space-y-3">
@@ -166,18 +167,18 @@ export function AddRetroColumn({
             />
             <div className="flex gap-2">
               <Button
-                onClick={handleSave}
-                className="flex-1"
-                disabled={!newRetroItemText.trim()}
-              >
-                Save
-              </Button>
-              <Button
                 variant="outline"
                 onClick={handleCancel}
                 className="flex-1"
               >
                 Cancel
+              </Button>
+              <Button
+                onClick={handleSave}
+                className="flex-1"
+                disabled={!newRetroItemText.trim()}
+              >
+                Save
               </Button>
             </div>
           </div>
@@ -188,25 +189,5 @@ export function AddRetroColumn({
         )}
       </div>
     </div>
-  );
-}
-
-function PlusIcon(props: React.SVGProps<SVGSVGElement>) {
-  return (
-    <svg
-      {...props}
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M5 12h14" />
-      <path d="M12 5v14" />
-    </svg>
   );
 }

@@ -38,7 +38,7 @@ type CreateRetroNoteActionParams = {
 
 async function createRetroNoteAction(params: CreateRetroNoteActionParams) {
   const { retroId, content, userId, category, categoryId } = params;
-  const created = await createRetroNote({
+  await createRetroNote({
     retroId,
     content,
     userId,
@@ -46,8 +46,6 @@ async function createRetroNoteAction(params: CreateRetroNoteActionParams) {
     createdAt: new Date(),
     categoryId: categoryId,
   });
-
-  return created;
 }
 
 async function deleteRetroNoteAction(noteId: number) {
