@@ -187,6 +187,51 @@ export function AddRetroColumn({
     sendMessage(JSON.stringify(message));
   };
 
+  const handleAddRetroItem = async () => {
+    if (!newRetroItemText.trim() || !user) return;
+
+    const newItem = {
+      id: 0, // Temporary ID
+      content: newRetroItemText,
+      userId: user.id!,
+      userName: user.name || 'Anonymous',
+      categoryId: columnId,
+      category: headerText,
+      guid: crypto.randomUUID(),
+      likes: 0,
+      likedBy: [],
+    };
+
+    // Optimistically add the item
+    setRetroItems((prev) => [...prev, newItem]);
+    setNewRetroItemText('');
+
+    try {
+      // Create the note and get its ID
+      const noteId = await createRetroNoteAction({
+        retroId: retro.retro.id!,
+        content: newRetroItemText,
+        userId: user.id!,
+        category: headerText,
+        categoryId: columnId,
+        guid: newItem.guid,
+      });
+
+      // Update the item with the real ID
+      setRetroItems((prev) =>
+        prev.map((item) =>
+          item.guid === newItem.guid ? { ...item, id: noteId } : item
+        )
+      );
+    } catch (error) {
+      console.error('Failed to create retro item:', error);
+      // Remove the item if creation failed
+      setRetroItems((prev) =>
+        prev.filter((item) => item.guid !== newItem.guid)
+      );
+    }
+  };
+
   const handleSave = async () => {
     if (newRetroItemText.trim()) {
       const newItem = {

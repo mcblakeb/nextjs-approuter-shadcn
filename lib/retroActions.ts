@@ -43,7 +43,7 @@ type CreateRetroNoteActionParams = {
 
 async function createRetroNoteAction(params: CreateRetroNoteActionParams) {
   const { retroId, content, userId, category, categoryId, guid } = params;
-  await createRetroNote({
+  const result = await createRetroNote({
     retroId,
     content,
     userId,
@@ -52,6 +52,9 @@ async function createRetroNoteAction(params: CreateRetroNoteActionParams) {
     categoryId: categoryId,
     guid,
   });
+
+  // Return the insertId from the ResultSetHeader
+  return result.insertId;
 }
 
 async function deleteRetroNoteAction(noteId: number) {
