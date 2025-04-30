@@ -251,38 +251,8 @@ export function AddRetroColumn({
     setIsGeneratingSummary(true);
     // Simulate AI summary generation
     setTimeout(() => {
-      const summary = generateAISummary(retroItems);
-      const aiSummaryNote = {
-        id: Date.now(), // Generate a unique ID (replace with actual logic if needed)
-        content: `AI Summary: ${summary}`,
-        userId: 0,
-        createdAt: new Date(),
-        retroId: 1, // Replace with actual retro ID if available
-        categoryId: columnId,
-        category: headerText,
-        likes: 0,
-        likedBy: [],
-      };
-      setRetroItems([...retroItems, aiSummaryNote]);
       setIsGeneratingSummary(false);
     }, 1500);
-  };
-
-  const generateAISummary = (items: RetroNote[]): string => {
-    if (items.length === 0) return 'No items to summarize';
-    const positives = items.filter(
-      (item) =>
-        item.content.toLowerCase().includes('good') ||
-        item.content.toLowerCase().includes('positive')
-    ).length;
-
-    const improvements = items.filter(
-      (item) =>
-        item.content.toLowerCase().includes('improve') ||
-        item.content.toLowerCase().includes('negative')
-    ).length;
-
-    return `Key insights: ${positives} positive notes, ${improvements} areas for improvement`;
   };
 
   return (

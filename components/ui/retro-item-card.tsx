@@ -41,6 +41,8 @@ interface WebSocketRetroMessage {
       userId: number;
       categoryId: number;
       category: string;
+      likes?: number;
+      likedBy?: number[];
     };
     user: {
       id: number;
@@ -74,8 +76,6 @@ export function RetroItemCard({
 }: RetroItemCardProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editedContent, setEditedContent] = useState(content);
-  const [localLikes, setLocalLikes] = useState(likes);
-  const [localLikedBy, setLocalLikedBy] = useState(likedBy);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const bgColor = getNameColorPredefined(userName);
   const { sendMessage } = useWebSocket();
@@ -85,27 +85,11 @@ export function RetroItemCard({
     setEditedContent(content);
   }, [content]);
 
-  // Update local like state when props change
-  useEffect(() => {
-    // Only update if the values are actually different
-    if (localLikes !== likes) {
-      setLocalLikes(likes);
-    }
-    if (JSON.stringify(localLikedBy) !== JSON.stringify(likedBy)) {
-      setLocalLikedBy(likedBy);
-    }
-  }, [likes, likedBy, localLikes, localLikedBy]);
-
   const handleLikeClick = () => {
-    const isCurrentlyLiked = localLikedBy.includes(userId);
-    const newLikedBy = isCurrentlyLiked
-      ? localLikedBy.filter((id) => id !== userId)
-      : [...localLikedBy, userId];
-    const newLikes = isCurrentlyLiked ? localLikes - 1 : localLikes + 1;
-
-    // Update local state immediately for UI feedback
-    setLocalLikes(newLikes);
-    setLocalLikedBy(newLikedBy);
+    console.log('userId', userId);
+    console.log('likedBy', likedBy);
+    const isCurrentlyLiked = likedBy.includes(userId);
+    console.log('Current like state:', { isCurrentlyLiked, likedBy, userId });
 
     // Send WebSocket message
     const message: WebSocketRetroMessage = {
@@ -118,6 +102,8 @@ export function RetroItemCard({
           userId,
           categoryId,
           category,
+          likes,
+          likedBy,
         },
         user: {
           id: userId,
@@ -272,15 +258,13 @@ export function RetroItemCard({
         <button
           onClick={handleLikeClick}
           className={`p-1 rounded-full hover:bg-gray-100 transition-colors ${
-            localLikedBy.includes(userId) ? 'text-blue-500' : 'text-gray-500'
+            likedBy.includes(userId) ? 'text-blue-500' : 'text-gray-500'
           }`}
           aria-label="Like this item"
         >
           <ThumbsUp className="h-4 w-4" />
         </button>
-        {localLikes > 0 && (
-          <span className="text-xs text-gray-600">+{localLikes}</span>
-        )}
+        {likes > 0 && <span className="text-xs text-gray-600">+{likes}</span>}
       </div>
       <CardAvatar bgColor={bgColor} userName={userName} />
     </div>
