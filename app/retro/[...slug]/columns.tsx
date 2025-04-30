@@ -11,7 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 
 interface ColumnsProps {
   initialRetro: RetroSlugResponse;
@@ -21,8 +21,8 @@ interface ColumnsProps {
 type SortOption = 'date' | 'likes' | 'author';
 
 export default function Columns({ initialRetro, user }: ColumnsProps) {
-  const { sendMessage, isConnected } = useWebSocket();
   const [sortBy, setSortBy] = useState<SortOption>('date');
+  const [sortedNotes, setSortedNotes] = useState(initialRetro.notes);
 
   const sortNotes = useCallback(
     (notes: any[]) => {
@@ -43,11 +43,9 @@ export default function Columns({ initialRetro, user }: ColumnsProps) {
     [sortBy]
   );
 
-  const handleSendMessage = () => {
-    if (isConnected) {
-      sendMessage('Your message here');
-    }
-  };
+  useEffect(() => {
+    setSortedNotes(sortNotes(initialRetro.notes));
+  }, [sortBy, initialRetro.notes, sortNotes]);
 
   return (
     <div className="flex flex-col w-full">
@@ -75,36 +73,28 @@ export default function Columns({ initialRetro, user }: ColumnsProps) {
           retroSlugResponse={initialRetro}
           columnId={0}
           headerText="The Good"
-          items={sortNotes(
-            initialRetro.notes.filter((note) => note.categoryId === 0)
-          )}
+          items={sortedNotes.filter((note) => note.categoryId === 0)}
         />
         <AddRetroColumn
           user={user}
           retroSlugResponse={initialRetro}
           columnId={1}
           headerText="To Improve"
-          items={sortNotes(
-            initialRetro.notes.filter((note) => note.categoryId === 1)
-          )}
+          items={sortedNotes.filter((note) => note.categoryId === 1)}
         />
         <AddRetroColumn
           user={user}
           retroSlugResponse={initialRetro}
           columnId={2}
           headerText="Action Items"
-          items={sortNotes(
-            initialRetro.notes.filter((note) => note.categoryId === 2)
-          )}
+          items={sortedNotes.filter((note) => note.categoryId === 2)}
         />
         <AddRetroColumn
           user={user}
           retroSlugResponse={initialRetro}
           columnId={3}
           headerText="Summary"
-          items={sortNotes(
-            initialRetro.notes.filter((note) => note.categoryId === 3)
-          )}
+          items={sortedNotes.filter((note) => note.categoryId === 3)}
           aiSummary={true}
         />
       </div>

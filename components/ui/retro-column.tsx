@@ -61,6 +61,11 @@ export function AddRetroColumn({
   const { sendMessage, addMessageHandler, removeMessageHandler } =
     useWebSocket();
 
+  // Sync retroItems with items prop
+  useEffect(() => {
+    setRetroItems(items);
+  }, [items]);
+
   useEffect(() => {
     const handleWebSocketMessage = (message: WebSocketRetroMessage) => {
       if (
