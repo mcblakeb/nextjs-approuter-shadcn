@@ -10,6 +10,7 @@ import {
   deleteRetroNoteAction,
   updateRetroNoteAction,
   addRetroNoteLikeAction,
+  removeRetroNoteLikeAction,
 } from '@/lib/retroActions';
 
 interface RetroItemCardProps {
@@ -89,17 +90,23 @@ export function RetroItemCard({
   const handleLikeClick = async () => {
     const isCurrentlyLiked = likedBy.includes(userId);
 
-    if (!isCurrentlyLiked) {
-      // Only add like if not already liked
-      try {
+    try {
+      if (isCurrentlyLiked) {
+        // Remove like if already liked
+        await removeRetroNoteLikeAction({
+          retroNoteId: noteId,
+          userId: userId,
+        });
+      } else {
+        // Add like if not already liked
         await addRetroNoteLikeAction({
           retroNoteId: noteId,
           userId: userId,
         });
-      } catch (error) {
-        console.error('Failed to add like:', error);
-        return; // Don't send WebSocket message if the like failed
       }
+    } catch (error) {
+      console.error('Failed to update like:', error);
+      return; // Don't send WebSocket message if the like update failed
     }
 
     // Send WebSocket message
