@@ -43,6 +43,7 @@ export default function CreateModal() {
         description: formData.description,
         createdById: user?.id!, // You might want to use actual user ID here
         date: date?.toISOString() || new Date().toISOString(),
+        guid: crypto.randomUUID() 
       });
 
       if (response?.slug) {

@@ -61,6 +61,7 @@ export default async function Onboarding() {
     slug: slug,
     date: newRetro.date,
     createdById: user!.id!,
+    guid: crypto.randomUUID(),
   });
 
   // Add tutorial items
@@ -76,6 +77,7 @@ export default async function Onboarding() {
       userId: user!.id!,
       content: item.content,
       categoryId: item.categoryId,
+      guid: crypto.randomUUID(),
     });
   }
 

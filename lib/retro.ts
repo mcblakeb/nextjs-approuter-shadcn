@@ -166,6 +166,7 @@ async function getUserByEmail(email: string): Promise<NewUser | null> {
 }
 
 async function createUser(user: NewUser) {
+  user.guid = crypto.randomUUID();
   const [created] = await db.insert(users).values(user).execute();
   return created;
 }

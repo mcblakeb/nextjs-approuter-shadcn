@@ -12,6 +12,7 @@ import { relations } from "drizzle-orm";
 // User table
 const users = mysqlTable("users", {
   id: serial("id").primaryKey(),
+  guid: varchar("guid", { length: 36 }).notNull().unique(),
   name: varchar("name", { length: 255 }).notNull(),
   email: varchar("email", { length: 255 }).notNull().unique(),
   image: varchar("image", { length: 512 }),
@@ -22,6 +23,7 @@ const users = mysqlTable("users", {
 // Retro table (updated)
 const retros = mysqlTable("retros", {
   id: serial("id").primaryKey(),
+  guid: varchar("guid", { length: 36 }).notNull().unique(),
   name: varchar("name", { length: 255 }).notNull(), // Changed from text
   description: text("description"), // Can stay as text since it's not indexed
   date: date("date").notNull(),
@@ -42,6 +44,7 @@ const usersToRetros = mysqlTable("users_to_retros", {
 
 const retroNotes = mysqlTable("retro_notes", {
   id: serial("id").primaryKey(),
+  guid: varchar("guid", { length: 36 }).notNull().unique(),
   retroId: int("retro_id").notNull(),
   userId: int("user_id").notNull(),
   content: text("content").notNull(),

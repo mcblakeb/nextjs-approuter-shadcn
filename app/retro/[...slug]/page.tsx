@@ -25,13 +25,11 @@ export default async function Page({
     await addUserToRetro(user.id!, currentRetro.retro.id!);
   }
 
-
   return (
     <RetroPageWrapper
       initialRetro={currentRetro}
       allRetros={allRetros}
       user={user}
-      slug={slug}
     />
   );
 }
