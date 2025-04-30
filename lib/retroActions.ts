@@ -1,11 +1,13 @@
-"use server";
+'use server';
 import {
   createRetro,
   createRetroNote,
   deleteRetroNote,
   updateRetroNote,
-} from "@/lib/retro";
-import { generateRandomSlug } from "@/lib/utils";
+  addRetroNoteLike,
+  removeRetroNoteLike,
+} from '@/lib/retro';
+import { generateRandomSlug } from '@/lib/utils';
 
 type CreateRetroActionParams = {
   title: string;
@@ -25,7 +27,7 @@ async function createRetroAction(params: CreateRetroActionParams) {
     date: new Date(date),
     createdAt: new Date(),
     updatedAt: new Date(),
-    guid
+    guid,
   });
   return created;
 }
@@ -48,7 +50,7 @@ async function createRetroNoteAction(params: CreateRetroNoteActionParams) {
     category,
     createdAt: new Date(),
     categoryId: categoryId,
-    guid
+    guid,
   });
 }
 
@@ -64,9 +66,54 @@ async function updateRetroNoteAction(noteId: number, content: string) {
   });
 }
 
+type AddRetroNoteLikeActionParams = {
+  retroNoteId: number;
+  userId: number;
+};
+
+async function addRetroNoteLikeAction(params: AddRetroNoteLikeActionParams) {
+  const { retroNoteId, userId } = params;
+  const result = await addRetroNoteLike({
+    retroNoteId,
+    userId,
+    createdAt: new Date(),
+  });
+
+  // Return a plain object without the Date
+  if ('id' in result) {
+    return {
+      id: result.id,
+      retroNoteId: result.retroNoteId,
+      userId: result.userId,
+    };
+  }
+
+  // If we get a ResultSetHeader, return the input params
+  return {
+    id: 0, // This will be replaced by the actual ID in the database
+    retroNoteId,
+    userId,
+  };
+}
+
+type RemoveRetroNoteLikeActionParams = {
+  retroNoteId: number;
+  userId: number;
+};
+
+async function removeRetroNoteLikeAction(
+  params: RemoveRetroNoteLikeActionParams
+) {
+  const { retroNoteId, userId } = params;
+  await removeRetroNoteLike(retroNoteId, userId);
+  return { retroNoteId, userId };
+}
+
 export {
   createRetroAction,
   createRetroNoteAction,
   deleteRetroNoteAction,
   updateRetroNoteAction,
+  addRetroNoteLikeAction,
+  removeRetroNoteLikeAction,
 };

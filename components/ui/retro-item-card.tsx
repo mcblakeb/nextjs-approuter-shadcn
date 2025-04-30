@@ -9,6 +9,7 @@ import { useWebSocket } from './websocket-init';
 import {
   deleteRetroNoteAction,
   updateRetroNoteAction,
+  addRetroNoteLikeAction,
 } from '@/lib/retroActions';
 
 interface RetroItemCardProps {
@@ -85,11 +86,21 @@ export function RetroItemCard({
     setEditedContent(content);
   }, [content]);
 
-  const handleLikeClick = () => {
-    console.log('userId', userId);
-    console.log('likedBy', likedBy);
+  const handleLikeClick = async () => {
     const isCurrentlyLiked = likedBy.includes(userId);
-    console.log('Current like state:', { isCurrentlyLiked, likedBy, userId });
+
+    if (!isCurrentlyLiked) {
+      // Only add like if not already liked
+      try {
+        await addRetroNoteLikeAction({
+          retroNoteId: noteId,
+          userId: userId,
+        });
+      } catch (error) {
+        console.error('Failed to add like:', error);
+        return; // Don't send WebSocket message if the like failed
+      }
+    }
 
     // Send WebSocket message
     const message: WebSocketRetroMessage = {
@@ -102,8 +113,10 @@ export function RetroItemCard({
           userId,
           categoryId,
           category,
-          likes,
-          likedBy,
+          likes: isCurrentlyLiked ? likes - 1 : likes + 1,
+          likedBy: isCurrentlyLiked
+            ? likedBy.filter((id) => id !== userId)
+            : [...likedBy, userId],
         },
         user: {
           id: userId,

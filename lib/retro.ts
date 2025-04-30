@@ -1,5 +1,5 @@
-import { eq } from "drizzle-orm";
-import { createDbConnection } from "./database";
+import { eq, inArray } from 'drizzle-orm';
+import { createDbConnection } from './database';
 import {
   NewRetro,
   NewRetroNote,
@@ -12,7 +12,9 @@ import {
   RetroNote,
   UserToRetro,
   Retro,
-} from "./schema";
+  retroNoteLikes,
+  NewRetroNoteLike,
+} from './schema';
 
 const db = await createDbConnection();
 
@@ -38,7 +40,7 @@ async function getUserRetros(userId: number): Promise<UserRetroResponse> {
 async function addUserToRetro(
   userId: number,
   retroId: number,
-  role: string = "member"
+  role: string = 'member'
 ): Promise<void> {
   // prevent adding the same user to the same retro multiple times
   const existingUser = await db.query.usersToRetros.findFirst({
@@ -52,7 +54,7 @@ async function addUserToRetro(
   await db.insert(usersToRetros).values({
     userId,
     retroId,
-    role: role as "owner" | "member",
+    role: role as 'owner' | 'member',
     createdAt: new Date(),
   });
 }
@@ -67,11 +69,37 @@ async function getLatestUserRetro(
 
   return latestRetro;
 }
+
 export type RetroSlugResponse = {
   retro: NewRetro;
   users: UserToRetro[];
   notes: RetroNote[];
 };
+
+async function getNoteLikes(noteIds: number[]) {
+  if (noteIds.length === 0) return {};
+
+  const likes = await db
+    .select()
+    .from(retroNoteLikes)
+    .where(inArray(retroNoteLikes.retroNoteId, noteIds));
+
+  // Group likes by noteId
+  const likesByNote = likes.reduce((acc, like) => {
+    if (!acc[like.retroNoteId]) {
+      acc[like.retroNoteId] = {
+        count: 0,
+        userIds: [],
+      };
+    }
+    acc[like.retroNoteId].count++;
+    acc[like.retroNoteId].userIds.push(like.userId);
+    return acc;
+  }, {} as Record<number, { count: number; userIds: number[] }>);
+
+  return likesByNote;
+}
+
 async function getUserRetroBySlug(slug: string): Promise<RetroSlugResponse> {
   const retro = await db.query.retros.findFirst({
     where: eq(retros.slug, slug),
@@ -89,10 +117,21 @@ async function getUserRetroBySlug(slug: string): Promise<RetroSlugResponse> {
     throw new Error(`Retro with slug "${slug}" not found`);
   }
 
+  // Get like counts for all notes
+  const noteIds = retro.notes.map((note) => note.id);
+  const likesByNote = await getNoteLikes(noteIds);
+
+  // Add likes data to notes
+  const notesWithLikes = retro.notes.map((note) => ({
+    ...note,
+    likes: likesByNote[note.id]?.count || 0,
+    likedBy: likesByNote[note.id]?.userIds || [],
+  }));
+
   return {
     retro,
     users: retro.users,
-    notes: retro.notes,
+    notes: notesWithLikes,
   };
 }
 
@@ -111,7 +150,7 @@ async function createRetro(retro: NewRetro) {
     .values({
       userId: retro.createdById,
       retroId: latestRetro!.id,
-      role: "owner",
+      role: 'owner',
       createdAt: new Date(),
     })
     .execute();
@@ -175,8 +214,39 @@ async function getRetroById(id: number) {
   return await db.select().from(retros).where(eq(retros.id, id));
 }
 
+async function addRetroNoteLike(like: NewRetroNoteLike) {
+  // Check if the like already exists
+  const existingLike = await db
+    .select()
+    .from(retroNoteLikes)
+    .where(
+      eq(retroNoteLikes.retroNoteId, like.retroNoteId) &&
+        eq(retroNoteLikes.userId, like.userId)
+    )
+    .limit(1)
+    .then((rows) => rows[0]);
+
+  if (existingLike) {
+    return existingLike;
+  }
+
+  const [created] = await db.insert(retroNoteLikes).values(like).execute();
+  return created;
+}
+
+async function removeRetroNoteLike(retroNoteId: number, userId: number) {
+  await db
+    .delete(retroNoteLikes)
+    .where(
+      eq(retroNoteLikes.retroNoteId, retroNoteId) &&
+        eq(retroNoteLikes.userId, userId)
+    )
+    .execute();
+}
+
 export {
   addUserToRetro,
+  addRetroNoteLike,
   createRetro,
   createRetroNote,
   createUser,
@@ -187,6 +257,7 @@ export {
   getUserByEmail,
   getUserRetroBySlug,
   getUserRetros,
+  removeRetroNoteLike,
   updateRetro,
   updateRetroNote,
 };
