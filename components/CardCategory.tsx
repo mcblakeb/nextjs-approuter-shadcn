@@ -1,12 +1,12 @@
-"use client";
+'use client';
 
-import { useActionState } from "react";
-import { useFormStatus } from "react-dom";
+import { useActionState } from 'react';
+import { useFormStatus } from 'react-dom';
 
-import { Input } from "@/components/ui/input";
+import { Input } from '@/components/ui/input';
 //import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
 // import {
 //   Select,
 //   SelectContent,
@@ -14,10 +14,10 @@ import { Label } from "@/components/ui/label";
 //   SelectTrigger,
 //   SelectValue,
 // } from "@/components/ui/select";
-import { createCategoryAction } from "@/actions/database";
+//import { createCategoryAction } from "@/actions/database";
 
 const initialState = {
-  message: "None",
+  message: 'None',
 };
 
 function SubmitButton() {
@@ -31,10 +31,10 @@ function SubmitButton() {
 }
 
 export default function CardCategory() {
-  const [state, formAction] = useActionState(
-    createCategoryAction,
-    initialState
-  );
+  // const [state, formAction] = useActionState(
+  //   createCategoryAction,
+  //   initialState
+  // );
 
   return (
     <Card className="w-full max-w-md mx-auto">
@@ -42,12 +42,12 @@ export default function CardCategory() {
         <CardTitle>Add New Column</CardTitle>
       </CardHeader>
       <CardContent>
-        <form action={formAction} className="space-y-4">
+        {/* <form action={formAction} className="space-y-4">
           <div>
             <Label>Column Name</Label>
             <Input id="CategoryName" name="CategoryName" />
           </div>
-          {/* <div>
+           <div>
             <Label>Column Type</Label>
             <Select>
               <SelectTrigger>
@@ -59,10 +59,10 @@ export default function CardCategory() {
                 <SelectItem value="boolean">Boolean (BOOLEAN)</SelectItem>
               </SelectContent>
             </Select>
-          </div> */}
+          </div>
           <SubmitButton />
           <p role="status">{state?.message}</p>
-        </form>
+        </form> */}
       </CardContent>
     </Card>
   );
