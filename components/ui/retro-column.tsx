@@ -306,7 +306,7 @@ export function AddRetroColumn({
   };
 
   return (
-    <div className="w-1/5 p-4 bg-gray-50 flex flex-col">
+    <div className="w-1/4 p-4 bg-gray-50 flex flex-col">
       {/* Header with optional AI button */}
       <div className="flex justify-between items-center mb-4">
         <h2 className="font-semibold text-lg">{headerText}</h2>

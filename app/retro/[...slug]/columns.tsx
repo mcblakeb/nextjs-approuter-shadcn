@@ -50,20 +50,25 @@ export default function Columns({ initialRetro, user }: ColumnsProps) {
   return (
     <div className="flex flex-col w-full">
       {/* Sort Controls */}
-      <div className="flex items-center p-4 border-b">
-        <Select
-          value={sortBy}
-          onValueChange={(value: SortOption) => setSortBy(value)}
-        >
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Sort by..." />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="date">Date Created</SelectItem>
-            <SelectItem value="likes">Number of Likes</SelectItem>
-            <SelectItem value="author">Created By</SelectItem>
-          </SelectContent>
-        </Select>
+      <div className="flex flex-col items-end p-4 border-b">
+        <div className="w-[180px]">
+          <label className="text-xs text-gray-500 mb-1 pl-0.5 block">
+            Sort
+          </label>
+          <Select
+            value={sortBy}
+            onValueChange={(value: SortOption) => setSortBy(value)}
+          >
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Sort by..." />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="date">Date Created</SelectItem>
+              <SelectItem value="likes">Number of Likes</SelectItem>
+              <SelectItem value="author">Created By</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       {/* Columns */}
