@@ -61,7 +61,14 @@ export async function getCardsGroupingAiResponse(
 
   Lighthearted cards like "I'm grateful for..." or "What went well...", "Had Fun", "Dave did a good job" should not be grouped together.
 
-  Analyze the following retro cards and group them by similarity. If there are no clear similarities, keep them as individual groups.
+  Keep explanations short and concise under each group. Ideally less than 10 words. For example: 
+  "Lack of communication with the boat Team"
+  instead of 
+  "These cards highlight a lack of communication with the boat team, indicating issues in team communication."
+
+  Analyze the following retro cards and group them by similarity. 
+  If there are no clear similarities, do not group them. Do not group all the cards in a row on multiple topics, only group cards that are related to the same topic. 
+  Cards many only be in a single group.
 
   Cards:
   ${cards
@@ -79,7 +86,11 @@ export async function getCardsGroupingAiResponse(
         "groups": [
           {
             "cardIds": [array of card IDs],
-            "explanation": "explanation of why these cards are grouped together, focusing on the specific technical or team aspects they share"
+            "explanation": "CONCISE (less than 10 words) explanation of why these cards are grouped together, focusing on the specific topic they share"
+          },
+          {
+            "cardIds": [array of card IDs],
+            "explanation": "CONCISE (less than 10 words) explanation of why these cards are grouped together, focusing on the specific topic they share"
           }
         ]
       }
