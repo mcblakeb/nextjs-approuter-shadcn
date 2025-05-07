@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/select';
 import { useState, useCallback, useEffect } from 'react';
 import { getCardsGroupingAiResponse } from '@/lib/rag';
+import { getRetroNotesByIdAction } from '@/lib/retroActions';
 
 interface ColumnsProps {
   initialRetro: RetroSlugResponse;
@@ -28,8 +29,9 @@ export default function Columns({ initialRetro, user }: ColumnsProps) {
   const handleGenerateSummary = async () => {
     setIsGeneratingSummary(true);
     try {
+      const notes = await getRetroNotesByIdAction(initialRetro.retro.id!);
       const grouping = await getCardsGroupingAiResponse(
-        initialRetro.notes.map((note) => ({
+        notes.map((note) => ({
           id: note.id,
           guid: note.guid,
           content: note.content,

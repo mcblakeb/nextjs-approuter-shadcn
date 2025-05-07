@@ -100,6 +100,12 @@ async function getNoteLikes(noteIds: number[]) {
   return likesByNote;
 }
 
+async function getRetroNotes(retroId: number) {
+  return await db.query.retroNotes.findMany({
+    where: eq(retroNotes.retroId, retroId),
+  });
+}
+
 async function getUserRetroBySlug(slug: string): Promise<RetroSlugResponse> {
   const retro = await db.query.retros.findFirst({
     where: eq(retros.slug, slug),
@@ -254,6 +260,7 @@ export {
   deleteRetroNote,
   getLatestUserRetro,
   getRetroById,
+  getRetroNotes,
   getUserByEmail,
   getUserRetroBySlug,
   getUserRetros,

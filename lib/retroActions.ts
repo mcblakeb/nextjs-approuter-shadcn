@@ -6,6 +6,7 @@ import {
   updateRetroNote,
   addRetroNoteLike,
   removeRetroNoteLike,
+  getRetroNotes,
 } from '@/lib/retro';
 import { generateRandomSlug } from '@/lib/utils';
 
@@ -30,6 +31,11 @@ async function createRetroAction(params: CreateRetroActionParams) {
     guid,
   });
   return created;
+}
+
+async function getRetroNotesByIdAction(retroId: number) {
+  const retroNotes = await getRetroNotes(retroId);
+  return retroNotes;
 }
 
 type CreateRetroNoteActionParams = {
@@ -116,6 +122,7 @@ export {
   createRetroAction,
   createRetroNoteAction,
   deleteRetroNoteAction,
+  getRetroNotesByIdAction,
   updateRetroNoteAction,
   addRetroNoteLikeAction,
   removeRetroNoteLikeAction,
