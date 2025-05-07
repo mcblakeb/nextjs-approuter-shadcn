@@ -1,7 +1,6 @@
 'use client';
 
 import { AddRetroColumn } from '@/components/ui/retro-column';
-import { useWebSocket } from '@/components/ui/websocket-init';
 import { RetroSlugResponse } from '@/lib/retro';
 import { NewUser } from '@/lib/schema';
 import {
@@ -12,6 +11,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useState, useCallback, useEffect } from 'react';
+import { getCardsGroupingAiResponse } from '@/lib/rag';
 
 interface ColumnsProps {
   initialRetro: RetroSlugResponse;
@@ -23,6 +23,32 @@ type SortOption = 'date' | 'likes' | 'author';
 export default function Columns({ initialRetro, user }: ColumnsProps) {
   const [sortBy, setSortBy] = useState<SortOption>('date');
   const [sortedNotes, setSortedNotes] = useState(initialRetro.notes);
+  const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
+
+  const handleGenerateSummary = async () => {
+    setIsGeneratingSummary(true);
+    try {
+      const grouping = await getCardsGroupingAiResponse(
+        initialRetro.notes.map((note) => ({
+          id: note.id,
+          guid: note.guid,
+          content: note.content,
+          category: note.category || '', // Ensure category is never null
+          categoryId: note.categoryId,
+          createdAt: note.createdAt,
+          retroId: note.retroId,
+          userId: note.userId,
+          user: { id: note.userId, name: '' },
+        }))
+      );
+
+      console.log(grouping);
+    } catch (error) {
+      console.error('Error generating summary:', error);
+    } finally {
+      setIsGeneratingSummary(false);
+    }
+  };
 
   const sortNotes = useCallback(
     (notes: any[]) => {
@@ -48,7 +74,7 @@ export default function Columns({ initialRetro, user }: ColumnsProps) {
   }, [sortBy, initialRetro.notes, sortNotes]);
 
   return (
-    <div className="flex flex-col w-full">
+    <div className="flex flex-col w-full h-full overflow-hidden">
       {/* Sort Controls */}
       <div className="flex flex-col items-end p-4 border-b">
         <div className="w-[180px]">
@@ -72,7 +98,7 @@ export default function Columns({ initialRetro, user }: ColumnsProps) {
       </div>
 
       {/* Columns */}
-      <div className="flex flex-1">
+      <div className="flex flex-col md:flex-row flex-1 overflow-y-auto md:overflow-hidden">
         <AddRetroColumn
           user={user}
           retroSlugResponse={initialRetro}
@@ -101,6 +127,8 @@ export default function Columns({ initialRetro, user }: ColumnsProps) {
           headerText="Summary"
           items={sortedNotes.filter((note) => note.categoryId === 3)}
           aiSummary={true}
+          onGenerateSummary={handleGenerateSummary}
+          isGeneratingSummary={isGeneratingSummary}
         />
       </div>
     </div>

@@ -22,7 +22,7 @@ export function RetroList({ retros, slug }: RetroListProps) {
   return (
     <div className="w-full h-full flex flex-col">
       {/* Retro list header */}
-      <h2 className="font-semibold mb-4 text-lg px-2">My Retros</h2>
+      <h2 className="font-semibold mb-20 md:mb-4 text-lg px-2">My Retros</h2>
 
       {/* Scrollable list */}
       <div className="flex-1 overflow-y-auto">

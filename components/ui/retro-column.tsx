@@ -18,6 +18,8 @@ type AddRetroColumnProps = {
   columnId: number;
   user: NewUser;
   retroSlugResponse: RetroSlugResponse;
+  onGenerateSummary?: () => Promise<void>;
+  isGeneratingSummary?: boolean;
 };
 
 interface WebSocketRetroMessage {
@@ -53,11 +55,12 @@ export function AddRetroColumn({
   user,
   retroSlugResponse: retro,
   items = [],
+  onGenerateSummary,
+  isGeneratingSummary,
 }: AddRetroColumnProps) {
   const [isAdding, setIsAdding] = useState(false);
   const [newRetroItemText, setNewRetroItemText] = useState('');
   const [retroItems, setRetroItems] = useState<any[]>(items || []);
-  const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
   const { sendMessage, addMessageHandler, removeMessageHandler } =
     useWebSocket();
 
@@ -297,16 +300,8 @@ export function AddRetroColumn({
     setIsAdding(false);
   };
 
-  const handleGenerateSummary = () => {
-    setIsGeneratingSummary(true);
-    // Simulate AI summary generation
-    setTimeout(() => {
-      setIsGeneratingSummary(false);
-    }, 1500);
-  };
-
   return (
-    <div className="w-1/4 p-4 bg-gray-50 flex flex-col">
+    <div className="w-full md:w-1/4 p-4 bg-gray-50 flex flex-col h-full">
       {/* Header with optional AI button */}
       <div className="flex justify-between items-center mb-4">
         <h2 className="font-semibold text-lg">{headerText}</h2>
@@ -315,7 +310,7 @@ export function AddRetroColumn({
             variant="ghost"
             size="sm"
             className="text-blue-800"
-            onClick={handleGenerateSummary}
+            onClick={onGenerateSummary}
             disabled={isGeneratingSummary}
           >
             <Sparkles className="h-4 w-4 mr-2" />
@@ -325,7 +320,7 @@ export function AddRetroColumn({
       </div>
 
       {/* Existing retro items */}
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto min-h-0">
         {retroItems
           .filter((item) => item.categoryId === columnId)
           .map((item) => (
