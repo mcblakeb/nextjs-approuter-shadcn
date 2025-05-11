@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { getNameColorPredefined } from '@/lib/utils';
-import { ThumbsUp, Edit, Check, X, Trash2 } from 'lucide-react';
+import { ThumbsUp, Edit, Check, X, Trash2, Sparkles } from 'lucide-react';
 import CardAvatar from '@/components/ui/card-avatar';
 import { useWebSocket } from './websocket-init';
 
@@ -14,19 +14,30 @@ import {
 } from '@/lib/retroActions';
 
 interface RetroItemCardProps {
-  content: string;
-  noteId: number;
-  userName?: string;
-  isAISummary?: boolean;
-  isMine: boolean;
-  onDelete?: () => void;
-  onUpdate?: () => void;
-  retroGuid: string;
-  categoryId: number;
-  category: string;
-  userId: number;
-  likes?: number;
-  likedBy?: number[];
+  item: {
+    id: number;
+    content: string;
+    userId: number;
+    categoryId: number;
+    category: string;
+    guid: string;
+    likes?: number;
+    likedBy?: number[];
+    isAiGenerated?: boolean;
+    user?: {
+      id: number;
+      name: string;
+    };
+  };
+  user: {
+    id: number;
+    name: string;
+  };
+  retroSlugResponse: {
+    retro: {
+      guid: string;
+    };
+  };
 }
 
 interface WebSocketRetroMessage {
@@ -62,46 +73,37 @@ import {
 import { MoreVertical } from 'lucide-react';
 
 export function RetroItemCard({
-  content,
-  noteId,
-  userName = 'Anonymous',
-  isAISummary = false,
-  isMine = false,
-  onDelete,
-  onUpdate,
-  retroGuid,
-  categoryId,
-  category,
-  userId,
-  likes = 0,
-  likedBy = [],
+  item,
+  user,
+  retroSlugResponse,
 }: RetroItemCardProps) {
   const [isEditing, setIsEditing] = useState(false);
-  const [editedContent, setEditedContent] = useState(content);
+  const [editedContent, setEditedContent] = useState(item.content);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const bgColor = getNameColorPredefined(userName);
+  const bgColor = getNameColorPredefined(item.user?.name || 'Anonymous');
   const { sendMessage } = useWebSocket();
+  const isMine = item.userId === user.id;
 
   // Update internal state when content prop changes
   useEffect(() => {
-    setEditedContent(content);
-  }, [content]);
+    setEditedContent(item.content);
+  }, [item.content]);
 
   const handleLikeClick = async () => {
-    const isCurrentlyLiked = likedBy.includes(userId);
+    const isCurrentlyLiked = item.likedBy?.includes(user.id) || false;
 
     try {
       if (isCurrentlyLiked) {
         // Remove like if already liked
         await removeRetroNoteLikeAction({
-          retroNoteId: noteId,
-          userId: userId,
+          retroNoteId: item.id,
+          userId: user.id,
         });
       } else {
         // Add like if not already liked
         await addRetroNoteLikeAction({
-          retroNoteId: noteId,
-          userId: userId,
+          retroNoteId: item.id,
+          userId: user.id,
         });
       }
     } catch (error) {
@@ -113,21 +115,23 @@ export function RetroItemCard({
     const message: WebSocketRetroMessage = {
       type: isCurrentlyLiked ? 'retro_item_unliked' : 'retro_item_liked',
       data: {
-        retroGuid,
+        retroGuid: retroSlugResponse.retro.guid,
         item: {
-          id: noteId,
-          content,
-          userId,
-          categoryId,
-          category,
-          likes: isCurrentlyLiked ? likes - 1 : likes + 1,
+          id: item.id,
+          content: item.content,
+          userId: user.id,
+          categoryId: item.categoryId,
+          category: item.category,
+          likes: isCurrentlyLiked
+            ? (item.likes || 0) - 1
+            : (item.likes || 0) + 1,
           likedBy: isCurrentlyLiked
-            ? likedBy.filter((id) => id !== userId)
-            : [...likedBy, userId],
+            ? (item.likedBy || []).filter((id) => id !== user.id)
+            : [...(item.likedBy || []), user.id],
         },
         user: {
-          id: userId,
-          name: userName,
+          id: user.id,
+          name: user.name,
         },
       },
     };
@@ -138,17 +142,17 @@ export function RetroItemCard({
     const message: WebSocketRetroMessage = {
       type: 'retro_item_deleted',
       data: {
-        retroGuid,
+        retroGuid: retroSlugResponse.retro.guid,
         item: {
-          id: noteId,
-          content,
-          userId,
-          categoryId,
-          category,
+          id: item.id,
+          content: item.content,
+          userId: user.id,
+          categoryId: item.categoryId,
+          category: item.category,
         },
         user: {
-          id: userId,
-          name: userName,
+          id: user.id,
+          name: user.name,
         },
       },
     };
@@ -156,10 +160,9 @@ export function RetroItemCard({
   };
 
   const handleDeleteClick = async () => {
-    await deleteRetroNoteAction(noteId);
+    await deleteRetroNoteAction(item.id);
     // Send WebSocket message about the deleted item
     sendRetroItemDeleteMessage();
-    if (onDelete) onDelete();
   };
 
   const handleEditClick = () => {
@@ -171,17 +174,17 @@ export function RetroItemCard({
     const message: WebSocketRetroMessage = {
       type: 'retro_item_updated',
       data: {
-        retroGuid,
+        retroGuid: retroSlugResponse.retro.guid,
         item: {
-          id: noteId,
+          id: item.id,
           content: updatedContent,
-          userId,
-          categoryId,
-          category,
+          userId: user.id,
+          categoryId: item.categoryId,
+          category: item.category,
         },
         user: {
-          id: userId,
-          name: userName,
+          id: user.id,
+          name: user.name,
         },
       },
     };
@@ -189,9 +192,8 @@ export function RetroItemCard({
   };
 
   const handleSaveClick = async () => {
-    if (editedContent !== content) {
-      await updateRetroNoteAction(noteId, editedContent);
-      if (onUpdate) onUpdate();
+    if (editedContent !== item.content) {
+      await updateRetroNoteAction(item.id, editedContent);
       // Send WebSocket message about the updated item
       sendRetroItemUpdateMessage(editedContent);
     }
@@ -199,36 +201,50 @@ export function RetroItemCard({
   };
 
   const handleCancelClick = () => {
-    setEditedContent(content);
+    setEditedContent(item.content);
     setIsEditing(false);
   };
 
   return (
     <div
       className={`p-3 mb-2 rounded border relative ${
-        isAISummary ? 'bg-blue-50 border-blue-200' : 'bg-white border-gray-200'
+        item.isAiGenerated
+          ? 'bg-white border-2 border-green-600'
+          : 'bg-transparent border border-gray-200'
       }`}
     >
-      {/* Action buttons dropdown at top right */}
+      {/* AI Logo for AI-generated cards */}
+      {item.isAiGenerated && (
+        <div className="absolute top-1 left-1">
+          <Sparkles className="h-4 w-4 text-green-600" />
+        </div>
+      )}
+
+      {/* Action buttons dropdown at top right - show delete for all cards, edit only for non-AI */}
       <div className="absolute top-1 right-1">
         {isMine && !isEditing && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button
-                className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors text-gray-500 hover:text-gray-700"
+                className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-gray-100/50 transition-colors text-gray-500 hover:text-gray-700 cursor-pointer"
                 aria-label="More options"
               >
                 <MoreVertical className="h-4 w-4" />
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-40">
-              <DropdownMenuItem onClick={handleEditClick}>
-                <Edit className="mr-2 h-4 w-4" />
-                <span>Edit</span>
-              </DropdownMenuItem>
+              {!item.isAiGenerated && (
+                <DropdownMenuItem
+                  onClick={handleEditClick}
+                  className="cursor-pointer"
+                >
+                  <Edit className="mr-2 h-4 w-4" />
+                  <span>Edit</span>
+                </DropdownMenuItem>
+              )}
               <DropdownMenuItem
                 onClick={handleDeleteClick}
-                className="text-red-600 focus:text-red-600 focus:bg-red-50"
+                className="text-red-600 focus:text-red-600 focus:bg-red-50 cursor-pointer"
               >
                 <Trash2 className="mr-2 h-4 w-4" />
                 <span>Delete</span>
@@ -236,19 +252,19 @@ export function RetroItemCard({
             </DropdownMenuContent>
           </DropdownMenu>
         )}
-        {isMine && isEditing && (
+        {isMine && isEditing && !item.isAiGenerated && (
           <div className="flex gap-1">
             <button
               onClick={handleSaveClick}
-              className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors text-gray-500 hover:text-green-500"
+              className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-gray-100/50 transition-colors text-gray-500 hover:text-green-500 cursor-pointer"
               aria-label="Save changes"
             >
               <Check className="h-4 w-4" />
             </button>
             <button
               onClick={handleCancelClick}
-              className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors text-gray-500 hover:text-red-500"
-              aria-label="Cancel editing"
+              className="w-6 h-6 flex items-center justify-center rounded-full hover:bg-gray-100/50 transition-colors text-gray-500 hover:text-red-500 cursor-pointer"
+              aria-label="Cancel changes"
             >
               <X className="h-4 w-4" />
             </button>
@@ -256,37 +272,50 @@ export function RetroItemCard({
         )}
       </div>
 
-      {isEditing ? (
-        <textarea
-          ref={textareaRef}
-          value={editedContent}
-          onChange={(e) => setEditedContent(e.target.value)}
-          className="w-full p-2 pr-8 pb-6 resize-none focus:outline-none"
-          rows={2}
-        />
-      ) : (
-        <p
-          className="pr-8 pb-6 whitespace-pre-wrap cursor-text"
-          onClick={isMine ? handleEditClick : undefined}
+      {/* Card content */}
+      <div className="flex items-start gap-2">
+        {!item.isAiGenerated && (
+          <CardAvatar name={item.user?.name || 'Anonymous'} bgColor={bgColor} />
+        )}
+        <div
+          className={`flex-1 min-w-0 ${item.isAiGenerated ? 'pl-4 pr-2' : ''}`}
         >
-          {editedContent}
-        </p>
-      )}
-
-      {/* Like button in bottom left */}
-      <div className="absolute bottom-1 left-1 flex items-center gap-1">
-        <button
-          onClick={handleLikeClick}
-          className={`p-1 rounded-full hover:bg-gray-100 transition-colors ${
-            likedBy.includes(userId) ? 'text-blue-500' : 'text-gray-500'
-          }`}
-          aria-label="Like this item"
-        >
-          <ThumbsUp className="h-4 w-4" />
-        </button>
-        {likes > 0 && <span className="text-xs text-gray-600">+{likes}</span>}
+          {isEditing && !item.isAiGenerated ? (
+            <textarea
+              ref={textareaRef}
+              value={editedContent}
+              onChange={(e) => setEditedContent(e.target.value)}
+              className="w-full p-2 border rounded resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white/80"
+              rows={3}
+            />
+          ) : (
+            <p
+              className={`whitespace-pre-wrap break-words ${
+                item.isAiGenerated
+                  ? 'text-[13px] text-green-800 italic'
+                  : 'text-sm'
+              }`}
+            >
+              {item.content}
+            </p>
+          )}
+          {!item.isAiGenerated && (
+            <div className="flex items-center gap-2 mt-2">
+              <button
+                onClick={handleLikeClick}
+                className={`flex items-center gap-1 text-sm ${
+                  item.likedBy?.includes(user.id)
+                    ? 'text-blue-600'
+                    : 'text-gray-500 hover:text-blue-600'
+                }`}
+              >
+                <ThumbsUp className="h-4 w-4" />
+                <span>{item.likes || 0}</span>
+              </button>
+            </div>
+          )}
+        </div>
       </div>
-      <CardAvatar bgColor={bgColor} userName={userName} />
     </div>
   );
 }

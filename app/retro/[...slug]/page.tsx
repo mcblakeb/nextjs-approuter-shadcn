@@ -2,6 +2,7 @@ import { getUser } from '@/lib/user';
 import { getUserRetroBySlug, getUserRetros, addUserToRetro } from '@/lib/retro';
 import { redirect } from 'next/navigation';
 import { RetroPageWrapper } from './retro-page-wrapper';
+import { createDbConnection } from '@/lib/database';
 
 export default async function Page({
   params,
@@ -18,11 +19,14 @@ export default async function Page({
     redirect('/auth/signin');
   }
 
-  const currentRetro = await getUserRetroBySlug(slug);
-  const allRetros = await getUserRetros(user!.id!);
+  const db = await createDbConnection();
+  const currentRetro = await getUserRetroBySlug(slug, db);
+  const allRetros = await getUserRetros(user!.id!, db);
 
-  if (!currentRetro.users.some((u) => u.id === user.id)) {
-    await addUserToRetro(user.id!, currentRetro.retro.id!);
+  // Add user to retro if they're not already a member
+  const isMember = currentRetro.users.some((u) => u.userId === user!.id!);
+  if (!isMember) {
+    await addUserToRetro(user!.id!, currentRetro.retro.id!, 'member', db);
   }
 
   return (

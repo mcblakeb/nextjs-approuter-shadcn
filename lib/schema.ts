@@ -7,6 +7,7 @@ import {
   datetime,
   int,
   varchar,
+  boolean,
 } from 'drizzle-orm/mysql-core';
 import { relations } from 'drizzle-orm';
 // User table
@@ -45,12 +46,14 @@ const usersToRetros = mysqlTable('users_to_retros', {
 const retroNotes = mysqlTable('retro_notes', {
   id: serial('id').primaryKey(),
   guid: varchar('guid', { length: 36 }).notNull().unique(),
+  groupingGuid: varchar('grouping_guid', { length: 36 }),
   retroId: int('retro_id').notNull(),
   userId: int('user_id').notNull(),
   content: text('content').notNull(),
   category: varchar('category', { length: 100 }),
   categoryId: int('category_id').notNull(),
   createdAt: datetime('created_at').default(new Date()).notNull(),
+  isAiGenerated: boolean('is_ai_generated').default(false),
 });
 
 const retroNoteLikes = mysqlTable('retro_note_likes', {

@@ -20,6 +20,7 @@ type AddRetroColumnProps = {
   retroSlugResponse: RetroSlugResponse;
   onGenerateSummary?: () => Promise<void>;
   isGeneratingSummary?: boolean;
+  groupColors?: Map<string, string>;
 };
 
 interface WebSocketRetroMessage {
@@ -57,6 +58,7 @@ export function AddRetroColumn({
   items = [],
   onGenerateSummary,
   isGeneratingSummary,
+  groupColors,
 }: AddRetroColumnProps) {
   const [isAdding, setIsAdding] = useState(false);
   const [newRetroItemText, setNewRetroItemText] = useState('');
@@ -64,10 +66,13 @@ export function AddRetroColumn({
   const { sendMessage, addMessageHandler, removeMessageHandler } =
     useWebSocket();
 
-  // Sync retroItems with items prop
+  // Sync retroItems with items prop and filter AI cards if not sorting by grouping
   useEffect(() => {
-    setRetroItems(items);
-  }, [items]);
+    const filteredItems = groupColors
+      ? items
+      : items.filter((item) => !item.isAiGenerated);
+    setRetroItems(filteredItems);
+  }, [items, groupColors]);
 
   useEffect(() => {
     const handleWebSocketMessage = (message: WebSocketRetroMessage) => {
@@ -90,11 +95,8 @@ export function AddRetroColumn({
           }
           return [...prevItems, newItem];
         });
-      } else if (
-        message.type === 'retro_item_deleted' &&
-        message.data.item.categoryId === columnId
-      ) {
-        // Remove the item from the state using the item's id since guid is not available in deletion message
+      } else if (message.type === 'retro_item_deleted') {
+        // Remove the item from the state regardless of column
         setRetroItems((prevItems) =>
           prevItems.filter(
             (item) => item.id.toString() !== message.data.item.id.toString()
@@ -301,51 +303,52 @@ export function AddRetroColumn({
   };
 
   return (
-    <div className="w-full md:w-1/4 p-4 bg-gray-50 flex flex-col h-full">
-      {/* Header with optional AI button */}
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="font-semibold text-lg">{headerText}</h2>
+    <div className="flex flex-col w-full h-full border-r last:border-r-0">
+      <div className="flex items-center justify-between p-4">
+        <h2 className="text-lg font-semibold">{headerText}</h2>
         {aiSummary && (
           <Button
             variant="ghost"
             size="sm"
-            className="text-blue-800"
             onClick={onGenerateSummary}
             disabled={isGeneratingSummary}
           >
-            <Sparkles className="h-4 w-4 mr-2" />
-            {isGeneratingSummary ? 'Generating...' : ''}
+            <Sparkles className="w-4 h-4 mr-2" />
+            {isGeneratingSummary ? 'Generating...' : 'Generate Summary'}
           </Button>
         )}
       </div>
-
-      {/* Existing retro items */}
-      <div className="flex-1 overflow-y-auto min-h-0">
-        {retroItems
-          .filter((item) => item.categoryId === columnId)
-          .map((item) => (
-            <RetroItemCard
-              key={item.guid || item.id}
-              content={item.content}
-              noteId={item.id}
-              isMine={item.userId === user.id}
-              onDelete={() => {
-                setRetroItems((prev) =>
-                  prev.filter((retroItem) => retroItem.id !== item.id)
-                );
+      <div className="flex-1 overflow-y-auto p-4">
+        {retroItems.map((item) => {
+          const bgColor = groupColors?.get(item.groupingGuid);
+          console.log(
+            'Item:',
+            item.id,
+            'Grouping GUID:',
+            item.groupingGuid,
+            'Background color:',
+            bgColor
+          );
+          return (
+            <div
+              key={item.id}
+              style={{
+                backgroundColor: bgColor || 'transparent',
+                transition: 'background-color 0.3s ease',
               }}
-              userName={item.user.name}
-              isAISummary={item.content.startsWith('AI Summary:')}
-              retroGuid={retro.retro.guid}
-              categoryId={columnId}
-              category={headerText}
-              userId={user.id || 0}
-              likes={item.likes}
-              likedBy={item.likedBy}
-            />
-          ))}
+            >
+              <RetroItemCard
+                item={item}
+                user={{
+                  id: user.id!,
+                  name: user.name,
+                }}
+                retroSlugResponse={retro}
+              />
+            </div>
+          );
+        })}
       </div>
-
       {/* Add new retro item section */}
       <div className="mt-auto pt-4">
         {isAdding ? (

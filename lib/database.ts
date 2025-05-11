@@ -1,5 +1,7 @@
-import { drizzle } from "drizzle-orm/mysql2";
-import mysql from "mysql2/promise";
+'use server';
+
+import { drizzle } from 'drizzle-orm/mysql2';
+import mysql from 'mysql2/promise';
 import {
   retroNoteRelations,
   retroNotes,
@@ -9,7 +11,7 @@ import {
   users,
   usersToRetros,
   usersToRetrosRelations,
-} from "./schema";
+} from './schema';
 
 const createDbConnection = async () => {
   const schema = {
@@ -30,7 +32,7 @@ const createDbConnection = async () => {
     port: 22787,
   });
 
-  return drizzle(connection, { schema, mode: "default" });
+  return drizzle(connection, { schema, mode: 'default' });
 };
 
 export { createDbConnection };

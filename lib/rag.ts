@@ -1,49 +1,18 @@
 'use server';
 
 import OpenAI from 'openai';
+import { AICardInput, AIResponse } from './ressponse-parser';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-interface Card {
-  id: number;
-  content: string;
-  userId: number;
-  categoryId: number;
-  category: string;
-  guid: string;
-  likes?: number;
-  likedBy?: number[];
-  user: {
-    id: number;
-    name: string;
-  };
-}
-
-interface CardGroup {
-  cardIds: number[];
-  explanation: string;
-}
-
-interface CategoryGrouping {
-  categoryId: number;
-  groups: CardGroup[];
-}
-
-interface GroupingResponse {
-  categoryGroupings: CategoryGrouping[];
-  overallExplanation: string;
-}
 
 export async function getCardsGroupingAiResponse(
-  cards: Card[]
-): Promise<GroupingResponse> {
+  cards: AICardInput[]
+): Promise<string> {
   if (cards.length === 0) {
-    return {
-      categoryGroupings: [],
-      overallExplanation: 'No cards to group',
-    };
+    return '';
   }
 
   const prompt = `You are an expert at analyzing software development team retrospectives. Your task is to identify patterns and group similar cards that discuss related technical, process, or team issues. Look for common themes like:
@@ -120,21 +89,9 @@ export async function getCardsGroupingAiResponse(
       throw new Error('No content in GPT response');
     }
 
-    const response = JSON.parse(content) as GroupingResponse;
-    return response;
+    return content;
   } catch (error) {
     console.error('Error grouping cards:', error);
-    return {
-      categoryGroupings: cards.map((card) => ({
-        categoryId: card.categoryId,
-        groups: [
-          {
-            cardIds: [card.id],
-            explanation: 'Error occurred during grouping',
-          },
-        ],
-      })),
-      overallExplanation: 'Error occurred during grouping process',
-    };
+    return '';
   }
 }

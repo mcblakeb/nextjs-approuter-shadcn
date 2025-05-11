@@ -1,3 +1,5 @@
+'use server';
+
 import { eq, inArray } from 'drizzle-orm';
 import { createDbConnection } from './database';
 import {
@@ -16,9 +18,22 @@ import {
   NewRetroNoteLike,
 } from './schema';
 
-const db = await createDbConnection();
+import { v4 as uuidv4 } from 'uuid';
 
-async function deleteRetro(id: number) {
+let db: Awaited<ReturnType<typeof createDbConnection>>;
+
+async function getDb() {
+  if (!db) {
+    db = await createDbConnection();
+  }
+  return db;
+}
+
+async function deleteRetro(
+  id: number,
+  database?: Awaited<ReturnType<typeof createDbConnection>>
+) {
+  const db = database || (await getDb());
   await db.delete(retros).where(eq(retros.id, id));
 }
 
@@ -27,7 +42,11 @@ export type UserRetroResponse = {
   user: NewUser;
 }[];
 
-async function getUserRetros(userId: number): Promise<UserRetroResponse> {
+async function getUserRetros(
+  userId: number,
+  database?: Awaited<ReturnType<typeof createDbConnection>>
+): Promise<UserRetroResponse> {
+  const db = database || (await getDb());
   return await db.query.usersToRetros.findMany({
     where: eq(usersToRetros.userId, userId),
     with: {
@@ -40,8 +59,10 @@ async function getUserRetros(userId: number): Promise<UserRetroResponse> {
 async function addUserToRetro(
   userId: number,
   retroId: number,
-  role: string = 'member'
+  role: string = 'member',
+  database?: Awaited<ReturnType<typeof createDbConnection>>
 ): Promise<void> {
+  const db = database || (await getDb());
   // prevent adding the same user to the same retro multiple times
   const existingUser = await db.query.usersToRetros.findFirst({
     where: (usersToRetros, { eq }) =>
@@ -76,9 +97,13 @@ export type RetroSlugResponse = {
   notes: RetroNote[];
 };
 
-async function getNoteLikes(noteIds: number[]) {
+async function getNoteLikes(
+  noteIds: number[],
+  database?: Awaited<ReturnType<typeof createDbConnection>>
+) {
   if (noteIds.length === 0) return {};
 
+  const db = database || (await getDb());
   const likes = await db
     .select()
     .from(retroNoteLikes)
@@ -100,13 +125,21 @@ async function getNoteLikes(noteIds: number[]) {
   return likesByNote;
 }
 
-async function getRetroNotes(retroId: number) {
+async function getRetroNotes(
+  retroId: number,
+  database?: Awaited<ReturnType<typeof createDbConnection>>
+) {
+  const db = database || (await getDb());
   return await db.query.retroNotes.findMany({
     where: eq(retroNotes.retroId, retroId),
   });
 }
 
-async function getUserRetroBySlug(slug: string): Promise<RetroSlugResponse> {
+async function getUserRetroBySlug(
+  slug: string,
+  database?: Awaited<ReturnType<typeof createDbConnection>>
+): Promise<RetroSlugResponse> {
+  const db = database || (await getDb());
   const retro = await db.query.retros.findFirst({
     where: eq(retros.slug, slug),
     with: {
@@ -125,7 +158,7 @@ async function getUserRetroBySlug(slug: string): Promise<RetroSlugResponse> {
 
   // Get like counts for all notes
   const noteIds = retro.notes.map((note) => note.id);
-  const likesByNote = await getNoteLikes(noteIds);
+  const likesByNote = await getNoteLikes(noteIds, db);
 
   // Add likes data to notes
   const notesWithLikes = retro.notes.map((note) => ({
@@ -141,7 +174,122 @@ async function getUserRetroBySlug(slug: string): Promise<RetroSlugResponse> {
   };
 }
 
-async function createRetro(retro: NewRetro) {
+async function getUserByEmail(
+  email: string,
+  database?: Awaited<ReturnType<typeof createDbConnection>>
+) {
+  const db = database || (await getDb());
+  return await db
+    .select()
+    .from(users)
+    .where(eq(users.email, email))
+    .limit(1)
+    .then((rows) => rows[0] || null);
+}
+
+async function createUser(
+  user: NewUser,
+  database?: Awaited<ReturnType<typeof createDbConnection>>
+) {
+  const db = database || (await getDb());
+  user.guid = crypto.randomUUID();
+  const [created] = await db.insert(users).values(user).execute();
+  return created;
+}
+
+async function getRetroById(
+  id: number,
+  database?: Awaited<ReturnType<typeof createDbConnection>>
+) {
+  const db = database || (await getDb());
+  return await db.select().from(retros).where(eq(retros.id, id));
+}
+
+async function addRetroNoteLike(
+  like: NewRetroNoteLike,
+  database?: Awaited<ReturnType<typeof createDbConnection>>
+) {
+  const db = database || (await getDb());
+  // Check if the like already exists
+  const existingLike = await db
+    .select()
+    .from(retroNoteLikes)
+    .where(
+      eq(retroNoteLikes.retroNoteId, like.retroNoteId) &&
+        eq(retroNoteLikes.userId, like.userId)
+    )
+    .limit(1)
+    .then((rows) => rows[0]);
+
+  if (existingLike) {
+    return existingLike;
+  }
+
+  const [created] = await db.insert(retroNoteLikes).values(like).execute();
+  return created;
+}
+
+async function removeRetroNoteLike(
+  retroNoteId: number,
+  userId: number,
+  database?: Awaited<ReturnType<typeof createDbConnection>>
+) {
+  const db = database || (await getDb());
+  await db
+    .delete(retroNoteLikes)
+    .where(
+      eq(retroNoteLikes.retroNoteId, retroNoteId) &&
+        eq(retroNoteLikes.userId, userId)
+    )
+    .execute();
+}
+
+export async function updateCardsWithGrouping(
+  cardIds: number[],
+  groupingGuid: string,
+  database?: Awaited<ReturnType<typeof createDbConnection>>
+) {
+  const db = database || (await getDb());
+  return await db
+    .update(retroNotes)
+    .set({ groupingGuid })
+    .where(inArray(retroNotes.id, cardIds));
+}
+
+export async function createAIGeneratedCard(
+  {
+    groupingGuid,
+    content,
+    categoryId,
+    userId,
+    retroId,
+  }: {
+    groupingGuid: string;
+    content: string;
+    categoryId: number;
+    userId: number;
+    retroId: number;
+  },
+  database?: Awaited<ReturnType<typeof createDbConnection>>
+) {
+  const db = database || (await getDb());
+  return await db.insert(retroNotes).values({
+    guid: uuidv4(),
+    groupingGuid,
+    content,
+    categoryId,
+    isAiGenerated: true,
+    userId,
+    retroId,
+    createdAt: new Date(),
+  });
+}
+
+async function createRetro(
+  retro: NewRetro,
+  database?: Awaited<ReturnType<typeof createDbConnection>>
+) {
+  const db = database || (await getDb());
   const [created] = await db.insert(retros).values(retro).execute();
 
   // get latest retro for by userId
@@ -164,7 +312,12 @@ async function createRetro(retro: NewRetro) {
   return latestRetro;
 }
 
-async function updateRetro(id: number, updates: Partial<NewRetro>) {
+async function updateRetro(
+  id: number,
+  updates: Partial<NewRetro>,
+  database?: Awaited<ReturnType<typeof createDbConnection>>
+) {
+  const db = database || (await getDb());
   const [updated] = await db
     .update(retros)
     .set(updates)
@@ -173,11 +326,19 @@ async function updateRetro(id: number, updates: Partial<NewRetro>) {
   return updated;
 }
 
-async function deleteRetroNote(id: number) {
+async function deleteRetroNote(
+  id: number,
+  database?: Awaited<ReturnType<typeof createDbConnection>>
+) {
+  const db = database || (await getDb());
   await db.delete(retroNotes).where(eq(retroNotes.id, id));
 }
 
-async function createRetroNote(retroNote: NewRetroNote) {
+async function createRetroNote(
+  retroNote: NewRetroNote,
+  database?: Awaited<ReturnType<typeof createDbConnection>>
+) {
+  const db = database || (await getDb());
   const [created] = await db.insert(retroNotes).values(retroNote).execute();
 
   // Update last update on the retro
@@ -192,62 +353,18 @@ async function createRetroNote(retroNote: NewRetroNote) {
   return created;
 }
 
-async function updateRetroNote(id: number, updates: Partial<NewRetroNote>) {
+async function updateRetroNote(
+  id: number,
+  updates: Partial<NewRetroNote>,
+  database?: Awaited<ReturnType<typeof createDbConnection>>
+) {
+  const db = database || (await getDb());
   const [updated] = await db
     .update(retroNotes)
     .set(updates)
     .where(eq(retroNotes.id, id))
     .execute();
   return updated;
-}
-
-async function getUserByEmail(email: string): Promise<NewUser | null> {
-  return await db
-    .select()
-    .from(users)
-    .where(eq(users.email, email))
-    .limit(1)
-    .then((rows) => rows[0] || null);
-}
-
-async function createUser(user: NewUser) {
-  user.guid = crypto.randomUUID();
-  const [created] = await db.insert(users).values(user).execute();
-  return created;
-}
-
-async function getRetroById(id: number) {
-  return await db.select().from(retros).where(eq(retros.id, id));
-}
-
-async function addRetroNoteLike(like: NewRetroNoteLike) {
-  // Check if the like already exists
-  const existingLike = await db
-    .select()
-    .from(retroNoteLikes)
-    .where(
-      eq(retroNoteLikes.retroNoteId, like.retroNoteId) &&
-        eq(retroNoteLikes.userId, like.userId)
-    )
-    .limit(1)
-    .then((rows) => rows[0]);
-
-  if (existingLike) {
-    return existingLike;
-  }
-
-  const [created] = await db.insert(retroNoteLikes).values(like).execute();
-  return created;
-}
-
-async function removeRetroNoteLike(retroNoteId: number, userId: number) {
-  await db
-    .delete(retroNoteLikes)
-    .where(
-      eq(retroNoteLikes.retroNoteId, retroNoteId) &&
-        eq(retroNoteLikes.userId, userId)
-    )
-    .execute();
 }
 
 export {

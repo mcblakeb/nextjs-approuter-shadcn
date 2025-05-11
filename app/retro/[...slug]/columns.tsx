@@ -13,18 +13,61 @@ import {
 import { useState, useCallback, useEffect } from 'react';
 import { getCardsGroupingAiResponse } from '@/lib/rag';
 import { getRetroNotesByIdAction } from '@/lib/retroActions';
+import { AIResponse, createAiCards } from '@/lib/ressponse-parser';
 
 interface ColumnsProps {
   initialRetro: RetroSlugResponse;
   user: NewUser;
 }
 
-type SortOption = 'date' | 'likes' | 'author';
+type SortOption = 'date' | 'likes' | 'author' | 'grouping';
+
+// Function to generate a pastel color
+const generatePastelColor = () => {
+  const hue = Math.floor(Math.random() * 360);
+  return `hsl(${hue}, 70%, 90%)`;
+};
+
+// Function to generate consistent colors for groups
+const getGroupColors = (notes: any[]) => {
+  const groupColors = new Map<string, string>();
+  const groupCounts = new Map<string, number>();
+
+  // First count how many cards are in each group
+  notes.forEach((note) => {
+    if (note.groupingGuid) {
+      groupCounts.set(
+        note.groupingGuid,
+        (groupCounts.get(note.groupingGuid) || 0) + 1
+      );
+    }
+  });
+
+  // Only assign colors to groups with more than one card
+  notes.forEach((note) => {
+    if (note.groupingGuid && !groupColors.has(note.groupingGuid)) {
+      const count = groupCounts.get(note.groupingGuid) || 0;
+      if (count > 1) {
+        const color = generatePastelColor();
+        groupColors.set(note.groupingGuid, color);
+      }
+    }
+  });
+  console.log('All group colors:', Object.fromEntries(groupColors));
+  return groupColors;
+};
 
 export default function Columns({ initialRetro, user }: ColumnsProps) {
   const [sortBy, setSortBy] = useState<SortOption>('date');
   const [sortedNotes, setSortedNotes] = useState(initialRetro.notes);
   const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
+  const [groupColors] = useState(() => {
+    console.log('Initial notes for color generation:', initialRetro.notes);
+    return getGroupColors(initialRetro.notes);
+  });
+
+  // Check if there are any AI cards in the retro
+  const hasAiCards = initialRetro.notes.some((note) => note.isAiGenerated);
 
   const handleGenerateSummary = async () => {
     setIsGeneratingSummary(true);
@@ -35,7 +78,7 @@ export default function Columns({ initialRetro, user }: ColumnsProps) {
           id: note.id,
           guid: note.guid,
           content: note.content,
-          category: note.category || '', // Ensure category is never null
+          category: note.category || '',
           categoryId: note.categoryId,
           createdAt: note.createdAt,
           retroId: note.retroId,
@@ -44,7 +87,24 @@ export default function Columns({ initialRetro, user }: ColumnsProps) {
         }))
       );
 
-      console.log(grouping);
+      const groupingParsed = JSON.parse(grouping) as AIResponse;
+      const parsedResponse = await createAiCards(
+        groupingParsed,
+        initialRetro.retro.id!,
+        user.id!
+      );
+
+      console.log(parsedResponse);
+
+      const updatedNotes = await getRetroNotesByIdAction(
+        initialRetro.retro.id!
+      );
+      setSortedNotes(
+        updatedNotes.map((note) => ({
+          ...note,
+          createdAt: new Date(note.createdAt),
+        }))
+      );
     } catch (error) {
       console.error('Error generating summary:', error);
     } finally {
@@ -60,6 +120,19 @@ export default function Columns({ initialRetro, user }: ColumnsProps) {
             return (b.likes || 0) - (a.likes || 0);
           case 'author':
             return a.user.name.localeCompare(b.user.name);
+          case 'grouping':
+            // First sort by grouping GUID
+            if (!a.groupingGuid && !b.groupingGuid) return 0;
+            if (!a.groupingGuid) return 1;
+            if (!b.groupingGuid) return -1;
+
+            // If they're in the same group, put AI cards first
+            if (a.groupingGuid === b.groupingGuid) {
+              if (a.isAiGenerated && !b.isAiGenerated) return -1;
+              if (!a.isAiGenerated && b.isAiGenerated) return 1;
+            }
+
+            return a.groupingGuid.localeCompare(b.groupingGuid);
           case 'date':
           default:
             return (
@@ -85,7 +158,14 @@ export default function Columns({ initialRetro, user }: ColumnsProps) {
           </label>
           <Select
             value={sortBy}
-            onValueChange={(value: SortOption) => setSortBy(value)}
+            onValueChange={(value: SortOption) => {
+              console.log('Sort changed to:', value);
+              console.log(
+                'Current group colors:',
+                Object.fromEntries(groupColors)
+              );
+              setSortBy(value);
+            }}
           >
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Sort by..." />
@@ -94,6 +174,9 @@ export default function Columns({ initialRetro, user }: ColumnsProps) {
               <SelectItem value="date">Date Created</SelectItem>
               <SelectItem value="likes">Number of Likes</SelectItem>
               <SelectItem value="author">Created By</SelectItem>
+              {hasAiCards && (
+                <SelectItem value="grouping">AI Summary</SelectItem>
+              )}
             </SelectContent>
           </Select>
         </div>
@@ -107,6 +190,7 @@ export default function Columns({ initialRetro, user }: ColumnsProps) {
           columnId={0}
           headerText="The Good"
           items={sortedNotes.filter((note) => note.categoryId === 0)}
+          groupColors={sortBy === 'grouping' ? groupColors : undefined}
         />
         <AddRetroColumn
           user={user}
@@ -114,6 +198,7 @@ export default function Columns({ initialRetro, user }: ColumnsProps) {
           columnId={1}
           headerText="To Improve"
           items={sortedNotes.filter((note) => note.categoryId === 1)}
+          groupColors={sortBy === 'grouping' ? groupColors : undefined}
         />
         <AddRetroColumn
           user={user}
@@ -121,6 +206,7 @@ export default function Columns({ initialRetro, user }: ColumnsProps) {
           columnId={2}
           headerText="Action Items"
           items={sortedNotes.filter((note) => note.categoryId === 2)}
+          groupColors={sortBy === 'grouping' ? groupColors : undefined}
         />
         <AddRetroColumn
           user={user}
@@ -131,6 +217,7 @@ export default function Columns({ initialRetro, user }: ColumnsProps) {
           aiSummary={true}
           onGenerateSummary={handleGenerateSummary}
           isGeneratingSummary={isGeneratingSummary}
+          groupColors={sortBy === 'grouping' ? groupColors : undefined}
         />
       </div>
     </div>
