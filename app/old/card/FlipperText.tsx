@@ -29,7 +29,6 @@ export default function FlipperText(props: CardProps) {
   // const sharedClassNames = `${styles.c} ${styles.shrink} px-2 flex text-center justify-center items-center card text-slate-900 text-4xl`;
 
   function nextItem() {
-    console.log('nextItem');
 
     if (currentIndex === showItems.length) {
       setItem(showItems[0]);

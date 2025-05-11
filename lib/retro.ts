@@ -1,6 +1,6 @@
 'use server';
 
-import { eq, inArray } from 'drizzle-orm';
+import { eq, inArray, and } from 'drizzle-orm';
 import { createDbConnection } from './database';
 import {
   NewRetro,
@@ -215,8 +215,10 @@ async function addRetroNoteLike(
     .select()
     .from(retroNoteLikes)
     .where(
-      eq(retroNoteLikes.retroNoteId, like.retroNoteId) &&
+      and(
+        eq(retroNoteLikes.retroNoteId, like.retroNoteId),
         eq(retroNoteLikes.userId, like.userId)
+      )
     )
     .limit(1)
     .then((rows) => rows[0]);

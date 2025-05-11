@@ -47,7 +47,6 @@ export default function CreateModal() {
       });
 
       if (response?.slug) {
-        console.log('Retro created:', response);
         setIsOpen(false);
         // Redirect to the new retro
         router.push(`/retro/${response.slug}`);

@@ -14,6 +14,7 @@ import {
 } from '@/lib/retroActions';
 
 interface RetroItemCardProps {
+  onDelete: (id: number) => void;
   item: {
     id: number;
     content: string;
@@ -76,6 +77,7 @@ export function RetroItemCard({
   item,
   user,
   retroSlugResponse,
+  onDelete
 }: RetroItemCardProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editedContent, setEditedContent] = useState(item.content);
@@ -160,6 +162,7 @@ export function RetroItemCard({
   };
 
   const handleDeleteClick = async () => {
+    onDelete(item.id);
     await deleteRetroNoteAction(item.id);
     // Send WebSocket message about the deleted item
     sendRetroItemDeleteMessage();

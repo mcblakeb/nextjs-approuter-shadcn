@@ -93,7 +93,12 @@ export function AddRetroColumn({
           if (prevItems.some((item) => item.guid === newItem.guid)) {
             return prevItems;
           }
-          return [...prevItems, newItem];
+          // Sort items after adding new item
+          const updatedItems = [...prevItems, newItem];
+          return updatedItems.sort(
+            (a, b) =>
+              new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+          );
         });
       } else if (message.type === 'retro_item_deleted') {
         // Remove the item from the state regardless of column
@@ -120,7 +125,12 @@ export function AddRetroColumn({
                 (item) => item.id.toString() === message.data.item.id.toString()
               )?.guid,
             };
-            return [...updatedItems, updatedItem];
+            // Sort items after updating
+            return [...updatedItems, updatedItem].sort(
+              (a, b) =>
+                new Date(b.createdAt).getTime() -
+                new Date(a.createdAt).getTime()
+            );
           }
 
           return updatedItems;
@@ -131,7 +141,7 @@ export function AddRetroColumn({
       ) {
         // Handle like/unlike events
         setRetroItems((prevItems) => {
-          return prevItems.map((item) => {
+          const updatedItems = prevItems.map((item) => {
             if (item.id.toString() === message.data.item.id.toString()) {
               // Update the like count based on the event type
               const currentLikes = item.likes || 0;
@@ -154,6 +164,7 @@ export function AddRetroColumn({
             }
             return item;
           });
+          return updatedItems;
         });
       }
     };
@@ -297,6 +308,10 @@ export function AddRetroColumn({
     }
   };
 
+  const handleDelete = (id: number) => {
+    setRetroItems((prevItems) => prevItems.filter((item) => item.id !== id));
+  };
+
   const handleCancel = () => {
     setNewRetroItemText('');
     setIsAdding(false);
@@ -321,14 +336,6 @@ export function AddRetroColumn({
       <div className="flex-1 overflow-y-auto p-4">
         {retroItems.map((item) => {
           const bgColor = groupColors?.get(item.groupingGuid);
-          console.log(
-            'Item:',
-            item.id,
-            'Grouping GUID:',
-            item.groupingGuid,
-            'Background color:',
-            bgColor
-          );
           return (
             <div
               key={item.id}
@@ -344,13 +351,14 @@ export function AddRetroColumn({
                   name: user.name,
                 }}
                 retroSlugResponse={retro}
+                onDelete={handleDelete}
               />
             </div>
           );
         })}
       </div>
       {/* Add new retro item section */}
-      <div className="mt-auto pt-4">
+      <div className="mt-auto pt-4 px-4 pb-4">
         {isAdding ? (
           <div className="space-y-3">
             <Input

@@ -53,7 +53,6 @@ const getGroupColors = (notes: any[]) => {
       }
     }
   });
-  console.log('All group colors:', Object.fromEntries(groupColors));
   return groupColors;
 };
 
@@ -62,7 +61,6 @@ export default function Columns({ initialRetro, user }: ColumnsProps) {
   const [sortedNotes, setSortedNotes] = useState(initialRetro.notes);
   const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
   const [groupColors] = useState(() => {
-    console.log('Initial notes for color generation:', initialRetro.notes);
     return getGroupColors(initialRetro.notes);
   });
 
@@ -94,13 +92,19 @@ export default function Columns({ initialRetro, user }: ColumnsProps) {
         user.id!
       );
 
-      console.log(parsedResponse);
-
       const updatedNotes = await getRetroNotesByIdAction(
         initialRetro.retro.id!
       );
+      const sortedNotes = [...updatedNotes]
+        .sort((a, b) => {
+          return (
+            new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+          );
+        })
+        .filter((note) => !note.isAiGenerated);
+
       setSortedNotes(
-        updatedNotes.map((note) => ({
+        sortedNotes.map((note) => ({
           ...note,
           createdAt: new Date(note.createdAt),
         }))
@@ -136,7 +140,7 @@ export default function Columns({ initialRetro, user }: ColumnsProps) {
           case 'date':
           default:
             return (
-              new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+              new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
             );
         }
       });
@@ -159,11 +163,6 @@ export default function Columns({ initialRetro, user }: ColumnsProps) {
           <Select
             value={sortBy}
             onValueChange={(value: SortOption) => {
-              console.log('Sort changed to:', value);
-              console.log(
-                'Current group colors:',
-                Object.fromEntries(groupColors)
-              );
               setSortBy(value);
             }}
           >
